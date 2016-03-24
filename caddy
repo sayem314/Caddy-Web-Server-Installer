@@ -207,7 +207,7 @@ case $1 in
 	'-v'|'about' )
 		about;;
 	'-h'|'help' )
-		about;;
+		prms;;
 	*)
 		caddystatus; howto;;
 esac
