@@ -6,10 +6,10 @@ Download 'caddy.sh' and run 'bash caddy.sh'
 
 Once done, you can use below command:
 
-caddy start          - Start Caddy Web Server<br>
-caddy stop           - Stop/Shutdown Caddy Web Server<br>
-caddy restart        - Restart Caddy Web Server<br>
-caddy status         - Check Caddy Web Server running or not<br>
-caddy install        - Install Caddy Web Server on fresh OS<br>
-caddy delete         - Uninstall Caddy and data.<br>
-caddy about          - About Caddy Web Server Installer<br>
+<code>caddy start          - Start Caddy Web Server</code> <br>
+<code>caddy stop           - Stop/Shutdown Caddy Web Server</code> <br>
+<code>caddy restart        - Restart Caddy Web Server</code> <br>
+<code>caddy status         - Check Caddy Web Server running or not</code> <br>
+<code>caddy install        - Install Caddy Web Server on fresh OS</code> <br>
+<code>caddy delete         - Uninstall Caddy and data.</code> <br>
+<code>caddy about          - About Caddy Web Server Installer</code> <br>
