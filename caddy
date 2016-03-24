@@ -1,0 +1,219 @@
+#!/bin/bash
+#
+#
+# Caddy Web Server Installer
+#
+#
+
+about () {
+	echo ""
+	echo "  ========================================================= "
+	echo "  \             Caddy Web Server Installer                / "
+	echo "  \             V 1.0 (beta)  (24 Mar 2016)               / "
+	echo "  \             Created by Sayem Chowdhury                / "
+	echo "  \             Caddy Web: Caddyserver.com                / "
+	echo "  ========================================================= "
+	echo ""
+}
+
+howto () {
+	echo "  Welcome!"
+	echo "  run 'caddy help' for help"
+	echo ""
+}
+
+prms () {
+	caddyname="Caddy Web Server"
+	echo "  caddy start          - Start $caddyname"
+	echo "  caddy stop           - Stop/Shutdown $caddyname"
+	echo "  caddy restart        - Restart $caddyname"
+	echo "  caddy status         - Check $caddyname running or not"
+	echo "  caddy install        - Install $caddyname on fresh OS"
+	echo "  caddy delete         - Uninstall Caddy and data."
+	echo "  caddy about          - About Caddy Web Server Installer"
+	echo ""
+}
+
+startcaddy () {
+	caddyname="Caddy Web Server"
+	caddy="/opt/caddyserver/caddy" #Caddy location
+	caddyfile="/opt/caddyserver/Caddyfile" #Caddy config file
+	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'`
+	if [ -z "$pids" ] ; then
+		echo -n "Starting $caddyname..."
+		$caddy -conf="$caddyfile" -quiet=true &
+		echo " Done."
+	else 
+		echo "  $caddyname is already running on: $pids"
+	fi
+}
+
+stopcaddy () {
+	caddyname="Caddy Web Server"
+	caddy="/opt/caddyserver/caddy" #Caddy location
+	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'|sort -r`
+	if [ -z "$pids" ] ; then
+		echo ""
+		echo "  $caddyname is NOT running!"
+	else 
+		echo ""
+		echo -n "  Shutting down $caddyname..."
+		kill $pids
+		rm -f $pids
+		echo "  Done."
+	fi
+}
+
+caddystatus () {
+	caddyname="Caddy Web Server"
+	caddy="opt/caddyserver/caddy" #Caddy location
+	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'`
+	caddycheck=`[ -e /opt/caddyserver/caddy ] && echo "Found" || echo "Not"`
+	if [ "$caddycheck" == 'Not' ]; then
+	echo ""
+	echo "  Caddy is not installed."
+	echo "  run 'caddy install' to install Caddy"
+	echo ""
+	exit
+	fi
+	#Detect Caddy process
+	if [ -z "$pids" ] ; then
+		echo ""
+		echo "  $caddyname is NOT running!"
+	else
+		caddymemusage=`cat  /proc/$pids/status | grep -i VMSIZE | awk 'NR=1 {print $2 $3}'`
+		echo ""
+		echo "  $caddyname is running"
+		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
+	fi
+	echo ""
+}
+
+installcaddy () {
+	caddyname="Caddy Web Server"
+	caddy="/opt/caddyserver/caddy" #Caddy location
+	cpubits=`uname -m`
+	#Detetcting Caddy installed or not
+	if [ -e "$caddy" ] ; then
+		echo ""
+		echo "  $caddyname is already installed on"
+		echo "  $caddy"
+		echo ""
+		exit
+		echo ""
+	fi
+	#Detecting ARM
+	if [ "$cpubits" == 'armeabi-v7a' ]; then
+	echo ""
+	echo "  Sorry! Your system is ARM based."
+	echo "  Perhaps Caddyserver.com have tutorial for you."
+	exit
+	fi
+	#Installing Caddy
+	echo ""
+	echo "  Caddy Web Server Installer"
+	if [ "$cpubits" == 'x86_64' ]; then
+	echo "  Downloading $caddyname (64bit)" #Caddy linux 64bit
+	wget -q "https://caddyserver.com/download/build?os=linux&arch=amd64&features=" -O "caddy_linux_custom.tar.gz"
+	else
+	echo "  Downloading $caddyname (32bit)" #Caddy linux 32bit
+	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
+	fi
+	#Creating folder
+	echo ""
+	mkdir /opt/caddyserver;
+	#Extract Caddy on created folder
+	echo "  Extracting $caddyname to $caddy"
+	tar xvzf caddy_linux_custom.tar.gz -C /opt/caddyserver &>/dev/null #Extracting Caddy
+	echo "  Caddy has been extracted to directory $caddy"
+	rm -rf caddy_linux_custom.tar.gz; #Deleting Caddy archive
+	echo ""
+	#Installing required php files
+	echo "  Installing required php files"
+	echo "  Installing php5-fpm php5-cli curl..."
+	#Detecting apt-get/yum
+	whicapt=`which apt-get`
+	if [ "$whicapt" == '/usr/bin/apt-get' ]; then
+	apt-get install php5-fpm php5-cli curl -y &>/dev/null
+	else
+	yum install php5-fpm php5-cli curl -y &>/dev/null
+	fi
+	echo "  Installed"
+}	
+
+caddyfile () {
+	#Generate Caddyfile
+	mkdir /opt/caddywww; chown `whoami` /opt/caddywww;
+	echo ""
+	echo "  Enter your domain name"
+	read -p "  Domain name: " domainname
+	echo "$domainname
+root /opt/caddywww
+gzip
+log /var/log/caddyaccess.log
+errors /var/log/caddyerror.log
+fastcgi / /var/run/php5-fpm.sock php" >> /opt/caddyserver/Caddyfile
+
+	#Generate example html
+	echo "<TITLE>Caddy Default Page</TITLE>
+
+<h1><font color="green">It works!</font></h1>
+
+<h3><font color="grey">This is the default welcome page used to test the correct operation of the Caddy web server after installation via Caddy Web Server Installer.</font></h3>
+
+<h3><font color="grey">If you can read this page, it means that the Caddy web server installed at this site is working properly.<br>
+You should <font color="#D03C3C">replace this file</font>
+(located at <tt>/opt/caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
+</hr>
+<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> /opt/caddywww/index.html
+	echo "  Done. Caddy has been installed"
+	echo ""
+
+}
+
+deletecaddy () {
+	if [[ -e  "/opt/caddyserver/caddy" ]] ; then
+		echo ""
+		echo "  Are you sure you want to delete caddy?"
+		echo "                 1) YES"
+		echo "                 2) NO"
+		read -p "  Select an option: " option
+		case $option in
+			1) 
+			echo ""
+			rm -rf /opt/caddyserver/ #delelting caddy web server folder
+			rm -rf /opt/caddywww/ #deleting caddy html folder
+			echo "  Caddy has been deleted"
+			echo ""
+			exit
+			;;
+			2) exit;;
+		esac
+		else
+		echo ""
+		echo "  Looks like Caddy is not installed"
+	fi
+	echo ""
+}
+
+# See how we were called.
+case $1 in
+	'-start'|'start' )
+		startcaddy;;
+	'-stop'|'stop' )
+		stopcaddy;;
+	'-restart'|'restart'|'-reload'|'reload' )
+		stopcaddy; startcaddy;;
+	'-status'|'status' )
+		caddystatus;;
+	'-install'|'install' )
+		installcaddy; caddyfile;;
+	'-del'|'delete'|'-rm' )
+		deletecaddy;;
+	'-v'|'about' )
+		about;;
+	'-h'|'help' )
+		about;;
+	*)
+		caddystatus; howto;;
+esac
