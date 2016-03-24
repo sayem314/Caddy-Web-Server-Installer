@@ -6,8 +6,7 @@
 #
 
 main () {
- caddycheck=`[ -e /usr/local/bin/caddy ] && echo "Found" || echo "Not"`
- if [ "$caddycheck" == 'Found' ]; then
+ if [ "`[ -e /usr/local/bin/caddy ] && echo "Found" || echo "Not"`" == 'Found' ]; then
 	echo ""
 	echo "  Removing old Caddy script"
 	rm -f /usr/local/bin/caddy
