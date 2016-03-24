@@ -5,6 +5,10 @@
 #
 #
 
+# Global config
+caddyname="Caddy Web Server"
+caddypath="/opt/caddyserver"
+
 about () {
 	echo ""
 	echo "  ========================================================= "
@@ -23,7 +27,6 @@ howto () {
 }
 
 prms () {
-	caddyname="Caddy Web Server"
 	echo "  caddy start          - Start $caddyname"
 	echo "  caddy stop           - Stop/Shutdown $caddyname"
 	echo "  caddy restart        - Restart $caddyname"
@@ -35,27 +38,22 @@ prms () {
 }
 
 startcaddy () {
-	caddyname="Caddy Web Server"
-	caddy="/opt/caddyserver/caddy" #Caddy location
-	caddyfile="/opt/caddyserver/Caddyfile" #Caddy config file
-	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'`
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo -n "Starting $caddyname..."
-		$caddy -conf="$caddyfile" -quiet=true &
+		$caddypath/caddy -conf="$caddypath/Caddyfile" -quiet=true &
 		echo " Done."
-	else 
+	else
 		echo "  $caddyname is already running on: $pids"
 	fi
 }
 
 stopcaddy () {
-	caddyname="Caddy Web Server"
-	caddy="/opt/caddyserver/caddy" #Caddy location
-	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'|sort -r`
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }' | sort -r`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is NOT running!"
-	else 
+	else
 		echo ""
 		echo -n "  Shutting down $caddyname..."
 		kill $pids
@@ -65,10 +63,8 @@ stopcaddy () {
 }
 
 caddystatus () {
-	caddyname="Caddy Web Server"
-	caddy="opt/caddyserver/caddy" #Caddy location
-	pids=`ps aux |grep $caddy|grep -v grep|awk '{ print $2 }'`
-	caddycheck=`[ -e /opt/caddyserver/caddy ] && echo "Found" || echo "Not"`
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
+	caddycheck=`[ -e $caddypath/caddy ] && echo "Found" || echo "Not"`
 	if [ "$caddycheck" == 'Not' ]; then
 	echo ""
 	echo "  Caddy is not installed."
@@ -90,14 +86,12 @@ caddystatus () {
 }
 
 installcaddy () {
-	caddyname="Caddy Web Server"
-	caddy="/opt/caddyserver/caddy" #Caddy location
 	cpubits=`uname -m`
 	#Detetcting Caddy installed or not
-	if [ -e "$caddy" ] ; then
+	if [ -e "$caddypath/caddy" ] ; then
 		echo ""
 		echo "  $caddyname is already installed on"
-		echo "  $caddy"
+		echo "  $caddypath/caddy"
 		echo ""
 		exit
 		echo ""
@@ -121,12 +115,12 @@ installcaddy () {
 	fi
 	#Creating folder
 	echo ""
-	mkdir /opt/caddyserver;
+	mkdir $caddypath
 	#Extract Caddy on created folder
-	echo "  Extracting $caddyname to $caddy"
-	tar xvzf caddy_linux_custom.tar.gz -C /opt/caddyserver &>/dev/null #Extracting Caddy
-	echo "  Caddy has been extracted to directory $caddy"
-	rm -rf caddy_linux_custom.tar.gz; #Deleting Caddy archive
+	echo "  Extracting $caddyname to $caddypath"
+	tar xvzf caddy_linux_custom.tar.gz -C $caddypath &>/dev/null #Extracting Caddy
+	echo "  Caddy has been extracted to directory $caddypath"
+	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
 	#Installing required php files
 	echo "  Installing required php files"
@@ -139,11 +133,12 @@ installcaddy () {
 	yum install php5-fpm php5-cli curl -y &>/dev/null
 	fi
 	echo "  Installed"
-}	
+}
 
 caddyfile () {
 	#Generate Caddyfile
-	mkdir /opt/caddywww; chown `whoami` /opt/caddywww;
+	mkdir /opt/caddywww
+	chown `whoami` /opt/caddywww
 	echo ""
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
@@ -152,7 +147,7 @@ root /opt/caddywww
 gzip
 log /var/log/caddyaccess.log
 errors /var/log/caddyerror.log
-fastcgi / /var/run/php5-fpm.sock php" >> /opt/caddyserver/Caddyfile
+fastcgi / /var/run/php5-fpm.sock php" >> $caddypath/Caddyfile
 
 	#Generate example html
 	echo "<TITLE>Caddy Default Page</TITLE>
@@ -172,16 +167,16 @@ You should <font color="#D03C3C">replace this file</font>
 }
 
 deletecaddy () {
-	if [[ -e  "/opt/caddyserver/caddy" ]] ; then
+	if [[ -e  "$caddypath" ]] ; then
 		echo ""
 		echo "  Are you sure you want to delete caddy?"
 		echo "                 1) YES"
 		echo "                 2) NO"
 		read -p "  Select an option: " option
 		case $option in
-			1) 
+			1)
 			echo ""
-			rm -rf /opt/caddyserver/ #delelting caddy web server folder
+			rm -rf $caddypath #delelting caddy web server folder
 			rm -rf /opt/caddywww/ #deleting caddy html folder
 			echo "  Caddy has been deleted"
 			echo ""
