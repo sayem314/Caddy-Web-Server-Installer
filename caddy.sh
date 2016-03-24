@@ -1,11 +1,15 @@
 #!/bin/bash
-
+#
+#
 # Caddy Web Server Installer
 #
-#	
- echo ""
- echo "Removing any previous version"
- rm -f /usr/local/bin/caddy
+#
+ caddycheck=`[ -e /usr/local/bin/caddy ] && echo "Found" || echo "Not"`
+ if [ "$caddycheck" == 'Found' ]; then
+	echo ""
+	echo "  Removing old Caddy script"
+	rm -f /usr/local/bin/caddy
+ fi
  echo ""
  echo "  Setting up Caddy"
  cd /tmp
@@ -14,3 +18,4 @@
  mv caddy /usr/local/bin
  echo "  Done. run 'caddy' to use Caddy"
  echo ""
+ exit;
