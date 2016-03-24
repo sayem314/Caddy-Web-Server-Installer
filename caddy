@@ -64,8 +64,7 @@ stopcaddy () {
 
 caddystatus () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
-	caddycheck=`[ -e $caddypath/caddy ] && echo "Found" || echo "Not"`
-	if [ "$caddycheck" == 'Not' ]; then
+	if [[ ! -e $caddypath/caddy ]]; then
 	echo ""
 	echo "  Caddy is not installed."
 	echo "  run 'caddy install' to install Caddy"
@@ -88,7 +87,7 @@ caddystatus () {
 installcaddy () {
 	cpubits=`uname -m`
 	#Detetcting Caddy installed or not
-	if [ -e "$caddypath/caddy" ] ; then
+	if [[ -e "$caddypath/caddy" ]]; then
 		echo ""
 		echo "  $caddyname is already installed on"
 		echo "  $caddypath/caddy"
@@ -118,7 +117,7 @@ installcaddy () {
 	mkdir $caddypath
 	#Extract Caddy on created folder
 	echo "  Extracting $caddyname to $caddypath"
-	tar xvzf caddy_linux_custom.tar.gz -C $caddypath &>/dev/null #Extracting Caddy
+	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
 	echo "  Caddy has been extracted to directory $caddypath"
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
