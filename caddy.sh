@@ -4,6 +4,8 @@
 # Caddy Web Server Installer
 #
 #
+
+main () {
  caddycheck=`[ -e /usr/local/bin/caddy ] && echo "Found" || echo "Not"`
  if [ "$caddycheck" == 'Found' ]; then
 	echo ""
@@ -18,4 +20,9 @@
  mv caddy /usr/local/bin
  echo "  Done. run 'caddy' to use Caddy"
  echo ""
- exit;
+}
+
+case $1 in
+	*)
+		main;;
+esac
