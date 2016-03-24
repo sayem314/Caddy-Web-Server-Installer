@@ -5,12 +5,9 @@
 #
 #
 
-main () {
- if [ "`[ -e /usr/local/bin/caddy ] && echo "Found" || echo "Not"`"=='Found' ]; then
-	echo ""
-	echo "  Removing old Caddy script"
-	rm -f /usr/local/bin/caddy
- fi
+ echo ""
+ echo "Removing any previous version"
+ rm -f /usr/local/bin/caddy
  echo ""
  echo "  Setting up Caddy"
  cd /tmp
@@ -19,9 +16,3 @@ main () {
  mv caddy /usr/local/bin
  echo "  Done. run 'caddy' to use Caddy"
  echo ""
-}
-
-case $1 in
-	*)
-		main;;
-esac
