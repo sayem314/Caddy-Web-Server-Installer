@@ -18,4 +18,4 @@
  mv caddy /usr/local/bin
  echo "  Done. run 'caddy' to use Caddy"
  echo ""
- exit;;
+ 
