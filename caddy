@@ -120,7 +120,6 @@ installcaddy () {
 	echo ""
 	mkdir -p $caddypath
 	mkdir -p $caddylog
-	chown $caddyuser $caddylog
 	#Extract Caddy on created folder
 	echo "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
@@ -129,7 +128,9 @@ installcaddy () {
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
 	#Creating non-root user
-	useradd -r -s /bin/false $caddyuser
+	useradd -r -d $caddypath -s /bin/false $caddyuser
+	chown $caddyuser $caddypath
+	chown $caddyuser $caddylog
 	#Installing required php files
 	echo "  Installing required php files"
 	echo "  Installing php5-fpm php5-cli curl..."
@@ -187,6 +188,7 @@ deletecaddy () {
 			rm -rf $caddypath #deleting caddy web server folder
 			rm $caddyfile #deleting caddyfile
 			rm -rf $caddywww #deleting caddy html folder
+			userdel $caddyuser
 			echo "  Caddy has been deleted"
 			echo ""
 			exit
