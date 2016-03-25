@@ -8,8 +8,10 @@
 # Global config
 caddyname="Caddy Web Server"
 caddypath="/opt/caddyserver"
+caddyuser="caddy"
 caddyfile="/etc/caddyfile"
 caddywww="/var/caddywww"
+caddylog="/var/log/caddy"
 
 about () {
 	echo ""
@@ -43,7 +45,7 @@ startcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo -n "Starting $caddyname..."
-		$caddypath/caddy -conf="$caddyfile" -quiet=true &
+		sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
 		echo " Done."
 	else
 		echo "  $caddyname is already running on: $pids"
@@ -114,15 +116,20 @@ installcaddy () {
 	echo "  Downloading $caddyname (32bit)" #Caddy linux 32bit
 	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
 	fi
-	#Creating folder
+	#Creating folders
 	echo ""
-	mkdir $caddypath
+	mkdir -p $caddypath
+	mkdir -p $caddylog
+	chown $caddyuser $caddylog
 	#Extract Caddy on created folder
 	echo "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
 	echo "  Caddy has been extracted to directory $caddypath"
+	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
+	#Creating non-root user
+	useradd -r -s /bin/false $caddyuser
 	#Installing required php files
 	echo "  Installing required php files"
 	echo "  Installing php5-fpm php5-cli curl..."
@@ -139,15 +146,15 @@ installcaddy () {
 caddyfile () {
 	#Generate Caddyfile
 	mkdir -p $caddywww
-	chown `whoami` $caddywww
+	chown $caddyuser $caddywww
 	echo ""
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
 	echo "$domainname
 root $caddywww
 gzip
-log /var/log/caddyaccess.log
-errors /var/log/caddyerror.log
+log $caddylog/access.log
+errors $caddylog/error.log
 fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
 
 	#Generate example html
@@ -178,6 +185,7 @@ deletecaddy () {
 			1)
 			echo ""
 			rm -rf $caddypath #deleting caddy web server folder
+			rm $caddyfile #deleting caddyfile
 			rm -rf $caddywww #deleting caddy html folder
 			echo "  Caddy has been deleted"
 			echo ""
