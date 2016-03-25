@@ -17,7 +17,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             V 1.0 (beta)  (24 Mar 2016)               / "
+	echo "  \             V 1.1 (beta)  (26 Mar 2016)               / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
