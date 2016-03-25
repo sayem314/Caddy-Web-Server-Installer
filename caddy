@@ -8,6 +8,8 @@
 # Global config
 caddyname="Caddy Web Server"
 caddypath="/opt/caddyserver"
+caddyfile="/etc/caddyfile"
+caddywww="/var/caddywww"
 
 about () {
 	echo ""
@@ -41,7 +43,7 @@ startcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo -n "Starting $caddyname..."
-		$caddypath/caddy -conf="$caddypath/Caddyfile" -quiet=true &
+		$caddypath/caddy -conf="$caddyfile" -quiet=true &
 		echo " Done."
 	else
 		echo "  $caddyname is already running on: $pids"
@@ -136,17 +138,17 @@ installcaddy () {
 
 caddyfile () {
 	#Generate Caddyfile
-	mkdir /opt/caddywww
-	chown `whoami` /opt/caddywww
+	mkdir -p $caddywww
+	chown `whoami` $caddywww
 	echo ""
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
 	echo "$domainname
-root /opt/caddywww
+root $caddywww
 gzip
 log /var/log/caddyaccess.log
 errors /var/log/caddyerror.log
-fastcgi / /var/run/php5-fpm.sock php" >> $caddypath/Caddyfile
+fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
 
 	#Generate example html
 	echo "<TITLE>Caddy Default Page</TITLE>
@@ -157,9 +159,9 @@ fastcgi / /var/run/php5-fpm.sock php" >> $caddypath/Caddyfile
 
 <h3><font color="grey">If you can read this page, it means that the Caddy web server installed at this site is working properly.<br>
 You should <font color="#D03C3C">replace this file</font>
-(located at <tt>/opt/caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
+(located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
-<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> /opt/caddywww/index.html
+<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
 	echo "  Done. Caddy has been installed"
 	echo ""
 
@@ -175,8 +177,8 @@ deletecaddy () {
 		case $option in
 			1)
 			echo ""
-			rm -rf $caddypath #delelting caddy web server folder
-			rm -rf /opt/caddywww/ #deleting caddy html folder
+			rm -rf $caddypath #deleting caddy web server folder
+			rm -rf $caddywww #deleting caddy html folder
 			echo "  Caddy has been deleted"
 			echo ""
 			exit
