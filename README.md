@@ -1,5 +1,4 @@
 # Caddy-Web-Server-Installer
-Caddy Web Server Installer v1.2 (beta)
 
 
 Download **caddy.sh** and run **bash caddy.sh**<br>
