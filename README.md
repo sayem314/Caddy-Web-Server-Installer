@@ -2,8 +2,8 @@
 Caddy Web Server Installer v1.1 (beta)
 
 
-Download **caddy.sh** and run **bash caddy.sh**
-This will download and install caddy and create the necessary files.
+Download **caddy.sh** and run **bash caddy.sh**<br>
+This will download and install caddy and create the necessary files.<br>
 Caddy will then run as non-root user "caddy".
 
 Once done, you can use below command:
