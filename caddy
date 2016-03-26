@@ -9,7 +9,7 @@
 caddyname="Caddy Web Server"
 caddypath="/opt/caddyserver"
 caddyuser="caddy"
-caddyfile="/etc/caddyfile"
+caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
 
@@ -17,7 +17,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             V 1.1 (beta)  (26 Mar 2016)               / "
+	echo "  \             V 1.2 (beta)  (26 Mar 2016)               / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -44,11 +44,11 @@ prms () {
 startcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
-		echo -n "Starting $caddyname..."
+		echo "$(tput setaf 2)Starting$(tput sgr0) $caddyname..."
 		sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
 		echo " Done."
 	else
-		echo "  $caddyname is already running on: $pids"
+		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pids (PID)"
 	fi
 }
 
@@ -56,10 +56,11 @@ stopcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }' | sort -r`
 	if [ -z "$pids" ] ; then
 		echo ""
-		echo "  $caddyname is NOT running!"
+		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
+		echo ""
 	else
 		echo ""
-		echo -n "  Shutting down $caddyname..."
+		echo "  $(tput setaf 1)Shutting down$(tput sgr0) $caddyname..."
 		kill $pids
 		rm -f $pids
 		echo "  Done."
@@ -78,11 +79,11 @@ caddystatus () {
 	#Detect Caddy process
 	if [ -z "$pids" ] ; then
 		echo ""
-		echo "  $caddyname is NOT running!"
+		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
 		caddymemusage=`cat  /proc/$pids/status | grep -i VMSIZE | awk 'NR=1 {print $2 $3}'`
 		echo ""
-		echo "  $caddyname is running"
+		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
 	fi
 	echo ""
@@ -135,8 +136,8 @@ installcaddy () {
 	echo "  Installing required php files"
 	echo "  Installing php5-fpm php5-cli curl..."
 	#Detecting apt-get/yum
-	whicapt=`which apt-get`
-	if [ "$whicapt" == '/usr/bin/apt-get' ]; then
+	aptcheck=`[ -e /usr/bin/apt-get ] && echo "Found" || echo "Not"`
+	if [ "$aptcheck" == 'Found' ]; then
 	apt-get install php5-fpm php5-cli curl -y &>/dev/null
 	else
 	yum install php5-fpm php5-cli curl -y &>/dev/null
@@ -188,7 +189,7 @@ deletecaddy () {
 			rm -rf $caddypath #deleting caddy web server folder
 			rm $caddyfile #deleting caddyfile
 			rm -rf $caddywww #deleting caddy html folder
-			userdel $caddyuser
+			userdel $caddyuser #delete caddy user
 			echo "  Caddy has been deleted"
 			echo ""
 			exit
