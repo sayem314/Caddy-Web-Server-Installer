@@ -17,7 +17,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             V 1.2 (beta)  (26 Mar 2016)               / "
+	echo "  \             V 1.3 (beta)  (26 Mar 2016)               / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -81,7 +81,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
-		caddymemusage=`cat  /proc/$pids/status | grep -i VMSIZE | awk 'NR=1 {print $2 $3}'`
+		caddymemusage=`ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
