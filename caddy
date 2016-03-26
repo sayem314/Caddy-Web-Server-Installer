@@ -8,12 +8,16 @@
 # Global config
 caddyname="Caddy Web Server"
 caddypath="/opt/caddyserver"
+caddyuser="caddy"
+caddyfile="/etc/caddyfile"
+caddywww="/var/caddywww"
+caddylog="/var/log/caddy"
 
 about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             V 1.0 (beta)  (24 Mar 2016)               / "
+	echo "  \             V 1.1 (beta)  (26 Mar 2016)               / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -41,7 +45,7 @@ startcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo -n "Starting $caddyname..."
-		$caddypath/caddy -conf="$caddypath/Caddyfile" -quiet=true &
+		sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
 		echo " Done."
 	else
 		echo "  $caddyname is already running on: $pids"
@@ -112,15 +116,21 @@ installcaddy () {
 	echo "  Downloading $caddyname (32bit)" #Caddy linux 32bit
 	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
 	fi
-	#Creating folder
+	#Creating folders
 	echo ""
-	mkdir $caddypath
+	mkdir -p $caddypath
+	mkdir -p $caddylog
 	#Extract Caddy on created folder
 	echo "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
 	echo "  Caddy has been extracted to directory $caddypath"
+	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
+	#Creating non-root user
+	useradd -r -d $caddypath -s /bin/false $caddyuser
+	chown $caddyuser $caddypath
+	chown $caddyuser $caddylog
 	#Installing required php files
 	echo "  Installing required php files"
 	echo "  Installing php5-fpm php5-cli curl..."
@@ -136,17 +146,17 @@ installcaddy () {
 
 caddyfile () {
 	#Generate Caddyfile
-	mkdir /opt/caddywww
-	chown `whoami` /opt/caddywww
+	mkdir -p $caddywww
+	chown $caddyuser $caddywww
 	echo ""
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
 	echo "$domainname
-root /opt/caddywww
+root $caddywww
 gzip
-log /var/log/caddyaccess.log
-errors /var/log/caddyerror.log
-fastcgi / /var/run/php5-fpm.sock php" >> $caddypath/Caddyfile
+log $caddylog/access.log
+errors $caddylog/error.log
+fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
 
 	#Generate example html
 	echo "<TITLE>Caddy Default Page</TITLE>
@@ -157,9 +167,9 @@ fastcgi / /var/run/php5-fpm.sock php" >> $caddypath/Caddyfile
 
 <h3><font color="grey">If you can read this page, it means that the Caddy web server installed at this site is working properly.<br>
 You should <font color="#D03C3C">replace this file</font>
-(located at <tt>/opt/caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
+(located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
-<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> /opt/caddywww/index.html
+<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
 	echo "  Done. Caddy has been installed"
 	echo ""
 
@@ -175,8 +185,10 @@ deletecaddy () {
 		case $option in
 			1)
 			echo ""
-			rm -rf $caddypath #delelting caddy web server folder
-			rm -rf /opt/caddywww/ #deleting caddy html folder
+			rm -rf $caddypath #deleting caddy web server folder
+			rm $caddyfile #deleting caddyfile
+			rm -rf $caddywww #deleting caddy html folder
+			userdel $caddyuser
 			echo "  Caddy has been deleted"
 			echo ""
 			exit
