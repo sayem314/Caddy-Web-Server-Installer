@@ -210,7 +210,7 @@ versioninfo () {
 	echo ""
 	echo "  $caddyscriptversion"
 	echo "  $caddyname $caddyserverversion"
-	echo "  $php5fpmversiont"
+	echo "  $php5fpmversion"
 	echo ""
 }
 
