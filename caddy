@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v1.9 beta (27 Mar 2016)"
+cwsiv="v2.0 beta (27 Mar 2016)"
 
 about () {
 	echo ""
@@ -142,7 +142,7 @@ installcaddy () {
 	if [ "$aptcheck" == 'Found' ]; then
 	apt-get install php5-fpm php5-cli curl -y &>/dev/null
 	else
-	yum install php5-fpm php5-cli curl -y &>/dev/null
+	yum install php-fpm php-cli curl -y &>/dev/null
 	fi
 	echo "  Installed"
 }
@@ -161,7 +161,7 @@ log $caddylog/access.log
 errors $caddylog/error.log
 fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
 	echo ""
-	echo "  Caddyfile created"
+	echo "  $caddyfile created"
 	else
 	echo "  Caddyfile found. Skip... "
 	fi
