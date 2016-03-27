@@ -1,3 +1,6 @@
+v1.9 beta (27 Mar 2016)
+update issue fixed
+
 v1.8 beta (27 Mar 2016)
 Added update function
 Changed text color on welcome
