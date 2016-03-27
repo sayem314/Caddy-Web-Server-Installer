@@ -12,12 +12,13 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
+cwsiv="v1.5 (beta)  (27 Mar 2016)"
 
 about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             V 1.4 (beta)  (27 Mar 2016)               / "
+	echo "  \             $cwsiv                / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -204,12 +205,11 @@ deletecaddy () {
 }
 
 versioninfo () {
-	caddyscriptversion="Caddy Web Server Installer - v1.4 (beta)"
 	caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
 	php5fpmversion=`php5-fpm -v | grep built`
 	echo ""
-	echo "  $caddyscriptversion"
 	echo "  $caddyname $caddyserverversion"
+	echo "  Caddy Web Server Installer - $cwsiv"
 	echo "  $php5fpmversion"
 	echo ""
 }
