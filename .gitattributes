@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
-* text=auto
+# * text=auto
+*.bash    text eol=lf whitespace=blank-at-eol,space-before-tab,tab-in-indent,trailing-space,tabwidth=4
+*.sh      text eol=lf whitespace=blank-at-eol,space-before-tab,tab-in-indent,trailing-space,tabwidth=4
