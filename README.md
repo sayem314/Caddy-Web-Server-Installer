@@ -17,6 +17,8 @@ Once done, you can use below command:
 
 > *caddy install*        - Install Caddy Web Server on fresh OS </hr>
 
+> *caddy update*         - Update Caddy Web Server</hr>
+
 > *caddy delete*         - Uninstall Caddy and data. </hr>
 
 > *caddy about*          - About Caddy Web Server Installer </hr>
