@@ -204,12 +204,12 @@ deletecaddy () {
 }
 
 versioninfo () {
-	caddyscriptversion="Caddy-Web-Server-Installer - v1.4 (beta)"
-	caddyserverversion=`$caddyname $caddypath/caddy -version | awk '{print $2}'`
+	caddyscriptversion="Caddy Web Server Installer - v1.4 (beta)"
+	caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
 	php5fpmversion=`php5-fpm -v | grep built`
 	echo ""
 	echo "  $caddyscriptversion"
-	echo "  $caddyserverversion'"
+	echo "  $caddyname $caddyserverversion"
 	echo "  $php5fpmversiont"
 	echo ""
 }
