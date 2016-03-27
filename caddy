@@ -18,7 +18,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \             $cwsiv                   / "
+	echo "  \               $cwsiv                 / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -159,9 +159,9 @@ gzip
 log $caddylog/access.log
 errors $caddylog/error.log
 fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
-	echo "Caddyfile created"
+	echo "  Caddyfile created"
 	else
-	echo "Caddyfile found. Skip creating Caddyfile"
+	echo "  Caddyfile found. Skip... "
 	fi
 	#Check if caddywww exist
 	if [[ ! -e $caddywww ]]; then
@@ -183,7 +183,7 @@ You should <font color="#D03C3C">replace this file</font>
 <h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
 	echo "  index.html created"
 	else
-	echo "index.html exist. Skip creating.."
+	echo "  index.html found. Skip ... "
 	fi
 	echo ""
 
