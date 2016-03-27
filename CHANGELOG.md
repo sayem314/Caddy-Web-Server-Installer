@@ -1,3 +1,7 @@
+v1.5 beta (27 Mar 2016)
+Globalized config
+Fixed not showing version info properly
+
 v1.4 beta (27 Mar 2016)
 Added version info
 
