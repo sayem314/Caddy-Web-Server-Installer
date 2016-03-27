@@ -22,3 +22,5 @@ Once done, you can use below command:
 > *caddy about*          - About Caddy Web Server Installer </hr>
 
 > *caddy help*           - Parameters guide </hr>
+
+> *caddy version*        - Check Script/Caddy/PHP5-fpm version info </hr>
