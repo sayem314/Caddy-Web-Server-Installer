@@ -1,5 +1,11 @@
+v1.7 beta (27 Mar 2016)
+Added few new line
+Changed color on few text
+Corrected some lines
+Formatted text
+
 v1.6 beta (27 Mar 2016)
-added compatibility to check if Caddyfile and index.html exist or not
+Added compatibility to check if Caddyfile and index.html exist or not
 
 v1.5 beta (27 Mar 2016)
 Globalized config
@@ -13,8 +19,8 @@ Fixed showing wrong RAM usage
 
 v1.2 beta (26 Mar 2016)
 apt-get/yum bug fixed
-colored few text line.
-minor issue fixed.
+Colored few text line.
+Minor issue fixed.
 
 v1.1 beta (26 Mar 2016)
 Globalized config, cleaned code a bit
