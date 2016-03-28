@@ -1,3 +1,7 @@
+v2.1 beta (28 Mar 2016)
+Caddyfile config updated
+Changed start/stop/install output
+
 v2.0 beta (27 Mar 2016)
 yum php install issue fixed
 
