@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.1 beta (27 Mar 2016)"
+cwsiv="v2.1 beta (28 Mar 2016)"
 
 about () {
 	echo ""
