@@ -131,7 +131,7 @@ installcaddy () {
 	mkdir -p $caddypath
 	mkdir -p $caddylog
 	#Extract Caddy on created folder
-	echo - n"  Extracting $caddyname to $caddypath..."
+	echo - n "  Extracting $caddyname to $caddypath..."
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
 	echo " $(tput setaf 2)DONE$(tput sgr0)"
 	setcap cap_net_bind_service=+ep $caddypath/caddy
