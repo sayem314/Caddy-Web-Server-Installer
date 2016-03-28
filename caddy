@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.0 beta (27 Mar 2016)"
+cwsiv="v2.1 beta (27 Mar 2016)"
 
 about () {
 	echo ""
@@ -46,11 +46,15 @@ prms () {
 startcaddy () {
 	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
-		echo "$(tput setaf 2)Starting$(tput sgr0) $caddyname..."
+		echo ""
+		echo -n "  Starting $caddyname..."
 		sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
-		echo " Done."
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
 	else
+		echo ""
 		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pids (PID)"
+		echo ""
 	fi
 }
 
@@ -62,10 +66,11 @@ stopcaddy () {
 		echo ""
 	else
 		echo ""
-		echo "  $(tput setaf 1)Shutting down$(tput sgr0) $caddyname..."
+		echo -n "  Shutting down $caddyname..."
 		kill $pids
 		rm -f $pids
-		echo "  Done."
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
 	fi
 }
 
@@ -113,20 +118,22 @@ installcaddy () {
 	echo ""
 	echo "  Caddy Web Server Installer"
 	if [ "$cpubits" == 'x86_64' ]; then
-	echo "  Downloading $caddyname (64bit)" #Caddy linux 64bit
+	echo -n "  Downloading $caddyname (64bit)..." #Caddy linux 64bit
 	wget -q "https://caddyserver.com/download/build?os=linux&arch=amd64&features=" -O "caddy_linux_custom.tar.gz"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
-	echo "  Downloading $caddyname (32bit)" #Caddy linux 32bit
+	echo -n "  Downloading $caddyname (32bit)..." #Caddy linux 32bit
 	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	fi
 	#Creating folders
 	echo ""
 	mkdir -p $caddypath
 	mkdir -p $caddylog
 	#Extract Caddy on created folder
-	echo "  Extracting $caddyname to $caddypath"
+	echo - n"  Extracting $caddyname to $caddypath..."
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
-	echo "  Caddy has been extracted to directory $caddypath"
+	echo " $(tput setaf 2)DONE$(tput sgr0)
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
@@ -155,6 +162,7 @@ caddyfile () {
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
 	echo "$domainname
+tls me@$domainname
 root $caddywww
 gzip
 log $caddylog/access.log
@@ -305,3 +313,4 @@ case $1 in
 	*)
 		caddystatus; howto;;
 esac
+exit 1
