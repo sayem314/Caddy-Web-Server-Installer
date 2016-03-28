@@ -168,8 +168,7 @@ gzip
 log $caddylog/access.log
 errors $caddylog/error.log
 fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
-	echo ""
-	echo "  $caddyfile created"
+	echo "  Caddyfile created"
 	else
 	echo "  Caddyfile found. Skip... "
 	fi
@@ -195,7 +194,6 @@ You should <font color="#D03C3C">replace this file</font>
 	else
 	echo "  index.html found. Skip ... "
 	fi
-	echo ""
 	echo "  Done. Caddy has been installed :)"
 	echo "  Run $(tput setaf 3)caddy start$(tput sgr0) to start $caddyname"
 	echo ""
