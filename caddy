@@ -12,6 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
+caddymail="your@email.com"
 cwsiv="v2.1 beta (28 Mar 2016)"
 
 about () {
@@ -162,7 +163,7 @@ caddyfile () {
 	echo "  Enter your domain name"
 	read -p "  Domain name: " domainname
 	echo "$domainname
-tls me@$domainname
+tls $caddymail
 root $caddywww
 gzip
 log $caddylog/access.log
