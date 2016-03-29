@@ -1,0 +1,45 @@
+v2.1 beta (28 Mar 2016)
+Caddyfile config updated
+Changed start/stop/install output
+
+v2.0 beta (27 Mar 2016)
+yum php install issue fixed
+
+v1.9 beta (27 Mar 2016)
+update issue fixed
+
+v1.8 beta (27 Mar 2016)
+Added update function
+Changed text color on welcome
+
+v1.7 beta (27 Mar 2016)
+Added few new line
+Changed color on few text
+Corrected some lines
+Formatted text
+
+v1.6 beta (27 Mar 2016)
+Added compatibility to check if Caddyfile and index.html exist or not
+
+v1.5 beta (27 Mar 2016)
+Globalized config
+Fixed not showing version info properly
+
+v1.4 beta (27 Mar 2016)
+Added version info
+
+v1.3 beta (26 Mar 2016)
+Fixed showing wrong RAM usage 
+
+v1.2 beta (26 Mar 2016)
+apt-get/yum bug fixed
+Colored few text line.
+Minor issue fixed.
+
+v1.1 beta (26 Mar 2016)
+Globalized config, cleaned code a bit
+Relocated caddyfile and webroot
+caddyuser bugfixed
+
+v1.0 beta (24 Mar 2016)
+Initial commit
