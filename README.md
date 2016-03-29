@@ -17,6 +17,8 @@ Once done, you can use below command:
 
 > *caddy install*        - Install Caddy Web Server on fresh OS </hr>
 
+> *caddy service*        - Make Caddy Web Server a service (upstart/systemd) </hr>
+
 > *caddy update*         - Update Caddy Web Server</hr>
 
 > *caddy delete*         - Uninstall Caddy and data. </hr>
