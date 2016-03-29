@@ -148,9 +148,9 @@ installcaddy () {
 	#Detecting apt-get/yum
 	aptcheck=`[ -e /usr/bin/apt-get ] && echo "Found" || echo "Not"`
 	if [ "$aptcheck" == 'Found' ]; then
-	apt-get install php5-fpm php5-cli curl -y &>/dev/null
+	apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
 	else
-	yum install php-fpm php-cli curl -y &>/dev/null
+	yum install php-fpm php-cli curl sudo -y &>/dev/null
 	fi
 	echo "  Installed"
 }
