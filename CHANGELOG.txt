@@ -1,3 +1,8 @@
+v2.2 beta (29 Mar 2016)
+Install caddyserver as a service
+Minor issue fixed
+Email option added for SSl
+
 v2.1 beta (28 Mar 2016)
 Caddyfile config updated
 Changed start/stop/install output
@@ -33,7 +38,7 @@ Fixed showing wrong RAM usage
 
 v1.2 beta (26 Mar 2016)
 apt-get/yum bug fixed
-Colored few text line.
+Colored few text line
 Minor issue fixed.
 
 v1.1 beta (26 Mar 2016)
