@@ -12,8 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-caddymail="your@email.com"
-cwsiv="v2.1 beta (28 Mar 2016)"
+cwsiv="v2.2 beta (29 Mar 2016)"
 
 about () {
 	echo ""
@@ -33,6 +32,7 @@ howto () {
 }
 
 prms () {
+	echo ""
 	echo "  caddy start          - Start $caddyname"
 	echo "  caddy stop           - Stop/Shutdown $caddyname"
 	echo "  caddy restart        - Restart $caddyname"
@@ -74,7 +74,7 @@ stopcaddy () {
 		echo ""
 		echo -n "  Shutting down $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			service caddy start
+			service caddy stop
 		else
 			kill $pids
 			rm -f $pids
@@ -107,25 +107,23 @@ caddystatus () {
 }
 
 installcaddy () {
-	cpubits=`uname -m`
+	echo ""
 	#Detetcting Caddy installed or not
 	if [[ -e "$caddypath/caddy" ]]; then
-		echo ""
 		echo "  $caddyname is already installed on"
 		echo "  $caddypath/caddy"
 		echo ""
 		exit
 		echo ""
 	fi
+	cpubits=`uname -m`
 	#Detecting ARM
 	if [ "$cpubits" == 'armeabi-v7a' ]; then
-	echo ""
 	echo "  Sorry! Your system is ARM based."
 	echo "  Perhaps Caddyserver.com have tutorial for you."
 	exit
 	fi
 	#Installing Caddy
-	echo ""
 	echo "  Caddy Web Server Installer"
 	if [ "$cpubits" == 'x86_64' ]; then
 	echo -n "  Downloading $caddyname (64bit)..." #Caddy linux 64bit
@@ -144,7 +142,6 @@ installcaddy () {
 	echo -n "  Extracting $caddyname to $caddypath..."
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
 	echo " $(tput setaf 2)DONE$(tput sgr0)"
-	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
 	#Creating non-root user
@@ -152,8 +149,7 @@ installcaddy () {
 	chown $caddyuser $caddypath
 	chown $caddyuser $caddylog
 	#Installing required php files
-	echo "  Installing required php files"
-	echo "  Installing php5-fpm php5-cli curl..."
+	echo -n "  Installing required php files..."
 	#Detecting apt-get/yum
 	aptcheck=`[ -e /usr/bin/apt-get ] && echo "Found" || echo "Not"`
 	if [ "$aptcheck" == 'Found' ]; then
@@ -161,6 +157,9 @@ installcaddy () {
 	else
 	yum install php-fpm php-cli curl sudo -y &>/dev/null
 	fi
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	#Port setup
+	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 	echo "  Installed"
 }
 
@@ -170,9 +169,13 @@ caddyfile () {
 	if [[ ! -e $caddyfile ]]; then
 	echo ""
 	echo "  Enter your domain name"
+	echo "  Seperated by comma"
 	read -p "  Domain name: " domainname
+	echo ""
+	echo "  Enter your email for automated ssl"
+	read -p "  Email: " domainmail
 	echo "$domainname
-tls $caddymail
+tls $domainmail
 root $caddywww
 gzip
 log $caddylog/access.log
