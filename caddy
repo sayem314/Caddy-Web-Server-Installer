@@ -38,6 +38,7 @@ prms () {
 	echo "  caddy restart        - Restart $caddyname"
 	echo "  caddy status         - Check $caddyname running or not"
 	echo "  caddy install        - Install $caddyname on fresh OS"
+	echo "  caddy service        - Make $caddyname a service (upstart/systemd)"
 	echo "  caddy update         - Update $caddyname"
 	echo "  caddy delete         - Uninstall Caddy and data."
 	echo "  caddy about          - About Caddy Web Server Installer"
@@ -49,7 +50,11 @@ startcaddy () {
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo -n "  Starting $caddyname..."
-		sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
+		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
+			service caddy start
+		else
+			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
+		fi
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 	else
@@ -68,15 +73,18 @@ stopcaddy () {
 	else
 		echo ""
 		echo -n "  Shutting down $caddyname..."
-		kill $pids
-		rm -f $pids
+		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
+			service caddy start
+		else
+			kill $pids
+			rm -f $pids
+		fi
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 	fi
 }
 
 caddystatus () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [[ ! -e $caddypath/caddy ]]; then
 	echo ""
 	echo "  Caddy is not installed."
@@ -85,6 +93,7 @@ caddystatus () {
 	exit
 	fi
 	#Detect Caddy process
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
@@ -250,6 +259,62 @@ updatecaddy () {
 	echo ""
 }
 
+makeservice () {
+  # Heuristic check for init > TODO improve!
+	init=`cat /proc/1/comm`
+	if [ "$init" == 'init' ]; then
+
+		cat > /etc/init/caddy.conf <<EOL
+# ${caddyname} Service
+
+description     "${caddyname}"
+
+start on (net-device-up	and runlevel [2345])
+stop on runlevel [016]
+
+setuid ${caddyuser}
+
+respawn
+respawn limit 10 5
+
+limit nofile 4096 4096
+
+pre-start script
+ [ ! -f "${caddyfile}" ] && { stop; exit 1; }
+ [ ! -e "${caddypath}/caddy" ] && { stop; exit 1; }
+ service php5-fpm start
+ exit 0
+end script
+
+exec ${caddypath}/caddy -conf="${caddyfile}" -quiet=true
+EOL
+
+	elif [ "$init" == 'systemd' ]; then
+
+		cat > /etc/systemd/system/caddy.service <<EOL
+[Unit]
+Description=${caddyname}
+After=network.target
+
+[Service]
+User=${caddyuser}
+LimitNOFILE=4096
+PIDFile=/var/run/caddy/caddy.pid
+ExecStartPre=[ -f ${caddyfile} ]
+ExecStartPre=[ -e ${caddypath}/caddy ]
+ExecStartPre=service php5-fpm start
+ExecStart=${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid
+Restart=on-failure
+StartLimitInterval=600
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+	systemctl enable caddy &>/dev/null
+	fi
+}
+
 deletecaddy () {
 	if [[ -e  "$caddypath" ]] ; then
 		echo ""
@@ -260,10 +325,18 @@ deletecaddy () {
 		case $option in
 			1)
 			echo ""
+			service caddy stop &>/dev/null
 			rm -rf $caddypath #deleting caddy web server folder
 			rm $caddyfile #deleting caddyfile
 			rm -rf $caddywww #deleting caddy html folder
 			userdel $caddyuser #delete caddy user
+			init=`cat /proc/1/comm`
+			if [ "$init" == 'init' ]; then
+				rm /etc/init/caddy.conf
+			elif [ "$init" == 'systemd' ]; then
+				systemctl disable caddy &>/dev/null
+				rm /etc/systemd/system/caddy.service
+			fi
 			echo "  Caddy has been deleted"
 			echo ""
 			exit
@@ -301,6 +374,8 @@ case $1 in
 		installcaddy; caddyfile;;
 	'-update'|'update' )
 		updatecaddy;;
+	'-service'|'service' )
+		makeservice;;
 	'-del'|'delete'|'-rm' )
 		deletecaddy;;
 	'-about'|'about' )
