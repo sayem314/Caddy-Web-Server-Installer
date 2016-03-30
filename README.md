@@ -2,6 +2,9 @@
 
 
 Download **caddy.sh** and run **bash caddy.sh**<br>
+####Or
+<code>wget script.yesgig.eu.org/caddy.sh -O - -o /dev/null|bash</code>
+
 This will download and install caddy and create the necessary files.<br>
 Caddy will then run as non-root user "caddy".
 
