@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.2 beta (29 Mar 2016)"
+cwsiv="v2.3 beta (03 Apr 2016)"
 
 about () {
 	echo ""
@@ -113,27 +113,33 @@ installcaddy () {
 		echo "  $caddyname is already installed on"
 		echo "  $caddypath/caddy"
 		echo ""
-		exit
-		echo ""
+		exit;
 	fi
-	cpubits=`uname -m`
-	#Detecting ARM
-	if [ "$cpubits" == 'armeabi-v7a' ]; then
-	echo "  Sorry! Your system is ARM based."
-	echo "  Perhaps Caddyserver.com have tutorial for you."
-	exit
+	#Detect architecture
+	if [ -n "$(uname -m | grep 64)" ]; then
+		cpubits="arch=amd64"
+		cpubitsname="for (64bit)..."
+	elif [ -n "$(uname -m | grep 86)" ]; then
+		cpubits="arch=386"
+		cpubitsname="for (32bit)..."
+	elif [ -n "$(uname -m | grep armv5)" ]; then
+		cpubits="arch=arm&arm=5"
+		cpubitsname="for (ARM 5)..."
+	elif [ -n "$(uname -m | grep armv6l)" ]; then
+		cpubits="arch=arm&arm=6"
+		cpubitsname="for (ARM 6)..."
+	elif [ -n "$(uname -m | grep armv7l)" ]; then
+		cpubits="arch=arm&arm=7"
+		cpubitsname="for (ARM 7)..."
+	else
+		echo "unsupported or unknown architecture"
+		echo ""
+		exit;
 	fi
 	#Installing Caddy
-	echo "  Caddy Web Server Installer"
-	if [ "$cpubits" == 'x86_64' ]; then
-	echo -n "  Downloading $caddyname (64bit)..." #Caddy linux 64bit
-	wget -q "https://caddyserver.com/download/build?os=linux&arch=amd64&features=" -O "caddy_linux_custom.tar.gz"
+	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
+	wget -q "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	else
-	echo -n "  Downloading $caddyname (32bit)..." #Caddy linux 32bit
-	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	fi
 	#Creating folders
 	echo ""
 	mkdir -p $caddypath
@@ -151,11 +157,14 @@ installcaddy () {
 	#Installing required php files
 	echo -n "  Installing required php files..."
 	#Detecting apt-get/yum
-	aptcheck=`[ -e /usr/bin/apt-get ] && echo "Found" || echo "Not"`
-	if [ "$aptcheck" == 'Found' ]; then
+	whichaptget=`which apt-get`
+	whichyum=`which yum`
+	if [[ -e "$whichaptget" ]]; then
 	apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
-	else
+	elif [[ -e "$whichyum" ]]; then
 	yum install php-fpm php-cli curl sudo -y &>/dev/null
+	else
+	echo "$(tput setaf 1)FAILED$(tput sgr0)"
 	fi
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	#Port setup
@@ -221,29 +230,36 @@ updatecaddy () {
 		sleep 0.2
 		echo "  run $(tput setaf 3)caddy install$(tput sgr0) to install $caddyname"
 		echo ""
-		exit
-		echo ""
+		exit;
 	fi
-	#Detecting ARM
-	if [ "$cpubits" == 'armeabi-v7a' ]; then
-	echo ""
-	echo "  Sorry! Your system is ARM based."
-	echo "  Perhaps Caddyserver.com have tutorial for you."
-	exit
+	#Detect architecture
+	if [ -n "$(uname -m | grep 64)" ]; then
+		cpubits="arch=amd64"
+		cpubitsname="for (64bit)..."
+	elif [ -n "$(uname -m | grep 86)" ]; then
+		cpubits="arch=386"
+		cpubitsname="for (32bit)..."
+	elif [ -n "$(uname -m | grep armv5)" ]; then
+		cpubits="arch=arm&arm=5"
+		cpubitsname="for (ARM 5)..."
+	elif [ -n "$(uname -m | grep armv6l)" ]; then
+		cpubits="arch=arm&arm=6"
+		cpubitsname="for (ARM 6)..."
+	elif [ -n "$(uname -m | grep armv7l)" ]; then
+		cpubits="arch=arm&arm=7"
+		cpubitsname="for (ARM 7)..."
+	else
+		echo "unsupported or unknown architecture"
+		echo ""
+		exit;
 	fi
 	#Updating Caddy
 	caddyserverversion=`$caddypath/caddy -version | awk '{print}'`
-	cpubits=`uname -m`
 	echo ""
 	echo "  Found $caddyserverversion"
-	if [ "$cpubits" == 'x86_64' ]; then
-	echo "  Downloading $caddyname (64bit)" #Caddy linux 64bit
-	wget -q "https://caddyserver.com/download/build?os=linux&arch=amd64&features=" -O "caddy_linux_custom.tar.gz"
-	else
-	echo "  Downloading $caddyname (32bit)" #Caddy linux 32bit
-	wget -q "https://caddyserver.com/download/build?os=linux&arch=386&features=" -O "caddy_linux_custom.tar.gz"
-	fi
-	echo "  Done"
+	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
+	wget -q "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	sleep 0.1
 	#Delete Caddy folder
 	echo "  Removing Caddy directory $caddypath"
