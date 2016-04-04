@@ -1,5 +1,6 @@
 v2.3 beta (03 Apr 2016)
 Added support for ARM
+Better detection for apt-get/yum install
 
 v2.2 beta (29 Mar 2016)
 Install caddyserver as a service
