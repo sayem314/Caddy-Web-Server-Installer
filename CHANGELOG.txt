@@ -1,3 +1,7 @@
+v2.4 beta (16 Apr 2016)
+Fixed 502 bad gateway of php
+Fixed minor issue
+
 v2.3 beta (03 Apr 2016)
 Added support for ARM
 Better detection for apt-get/yum install
