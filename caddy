@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.3 beta (03 Apr 2016)"
+cwsiv="v2.4 beta (16 Apr 2016)"
 
 about () {
 	echo ""
@@ -106,6 +106,13 @@ caddystatus () {
 	echo ""
 }
 
+amiroot () {
+	if [[ "$EUID" -ne 0 ]]; then
+		echo "  Sorry, you need to run this as root"
+		exit
+	fi
+}
+
 installcaddy () {
 	echo ""
 	#Detetcting Caddy installed or not
@@ -136,9 +143,10 @@ installcaddy () {
 		echo ""
 		exit;
 	fi
+	nocert="--no-check-certificate"
 	#Installing Caddy
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
-	wget -q "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
+	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	#Creating folders
 	echo ""
@@ -161,15 +169,38 @@ installcaddy () {
 	whichyum=`which yum`
 	if [[ -e "$whichaptget" ]]; then
 	apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	elif [[ -e "$whichyum" ]]; then
 	yum install php-fpm php-cli curl sudo -y &>/dev/null
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
 	echo "$(tput setaf 1)FAILED$(tput sgr0)"
 	fi
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	#Port setup
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 	echo "  Installed"
+}
+
+fixphpfpm () {
+	nocert="--no-check-certificate"
+	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
+	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
+	#Detect php5-fpm or php-fpm
+	echo -n "  Fixing php"
+	if [[ -e "$ubuntuphp5fpm" ]]; then
+	rm -f $ubuntuphp5fpm
+	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	elif [[ -e "$centosphpfpm" ]]; then
+	rm -f $centosphpfpm
+	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	else
+	echo ""
+	echo "$(tput setaf 1)FAILED$(tput sgr0)"
+	echo " php not found!"
+	echo ""
+	fi
 }
 
 caddyfile () {
@@ -190,6 +221,7 @@ gzip
 log $caddylog/access.log
 errors $caddylog/error.log
 fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
+	echo ""
 	echo "  Caddyfile created"
 	else
 	echo "  Caddyfile found. Skip... "
@@ -212,6 +244,7 @@ You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
 <h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
+	echo ""
 	echo "  index.html created"
 	else
 	echo "  index.html found. Skip ... "
@@ -253,12 +286,13 @@ updatecaddy () {
 		echo ""
 		exit;
 	fi
+	nocert="--no-check-certificate"
 	#Updating Caddy
 	caddyserverversion=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
 	echo "  Found $caddyserverversion"
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
-	wget -q "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
+	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	sleep 0.1
 	#Delete Caddy folder
@@ -390,13 +424,15 @@ case $1 in
 	'-status'|'status' )
 		caddystatus;;
 	'-install'|'install' )
-		installcaddy; caddyfile;;
+		amiroot; installcaddy; caddyfile; fixphpfpm;;
 	'-update'|'update' )
-		updatecaddy;;
+		amiroot; updatecaddy; fixphpfpm;;
+	'-fixphp'|'fixphp' )
+		amiroot; fixphpfpm;;
 	'-service'|'service' )
-		makeservice;;
+		amiroot; makeservice;;
 	'-del'|'delete'|'-rm' )
-		deletecaddy;;
+		amiroot; deletecaddy;;
 	'-about'|'about' )
 		about;;
 	'-h'|'help' )
