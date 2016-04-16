@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.4 beta (16 Apr 2016)"
+cwsiv="v2.5 beta (16 Apr 2016)"
 
 about () {
 	echo ""
@@ -174,7 +174,7 @@ installcaddy () {
 	yum install php-fpm php-cli curl sudo -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
-	echo "$(tput setaf 1)FAILED$(tput sgr0)"
+	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
 	fi
 	#Port setup
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
@@ -186,14 +186,16 @@ fixphpfpm () {
 	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
 	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
 	#Detect php5-fpm or php-fpm
-	echo -n "  Fixing php"
+	echo -n "  Fixing php..."
 	if [[ -e "$ubuntuphp5fpm" ]]; then
 	rm -f $ubuntuphp5fpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
+	service php5-fpm restart
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	elif [[ -e "$centosphpfpm" ]]; then
 	rm -f $centosphpfpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
+	service php-fpm restart
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	else
 	echo ""
@@ -244,11 +246,11 @@ You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
 <h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
-	echo ""
 	echo "  index.html created"
 	else
 	echo "  index.html found. Skip ... "
 	fi
+	echo ""
 	echo "  Done. Caddy has been installed :)"
 	echo "  Run $(tput setaf 3)caddy start$(tput sgr0) to start $caddyname"
 	echo ""
@@ -366,6 +368,8 @@ EOL
 
 	systemctl enable caddy &>/dev/null
 	fi
+	echo "  Service created"
+	echo ""
 }
 
 deletecaddy () {
@@ -424,9 +428,9 @@ case $1 in
 	'-status'|'status' )
 		caddystatus;;
 	'-install'|'install' )
-		amiroot; installcaddy; caddyfile; fixphpfpm;;
+		amiroot; installcaddy; fixphpfpm; caddyfile;;
 	'-update'|'update' )
-		amiroot; updatecaddy; fixphpfpm;;
+		amiroot; updatecaddy; fixphpfpm; caddyfile;;
 	'-fixphp'|'fixphp' )
 		amiroot; fixphpfpm;;
 	'-service'|'service' )
