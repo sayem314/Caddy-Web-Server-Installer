@@ -1,3 +1,6 @@
+v2.5 beta (16 Apr 2016)
+Fixed php issue
+
 v2.4 beta (16 Apr 2016)
 Fixed 502 bad gateway of php
 Fixed minor issue
