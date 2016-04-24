@@ -168,6 +168,7 @@ installcaddy () {
 	whichaptget=`which apt-get`
 	whichyum=`which yum`
 	if [[ -e "$whichaptget" ]]; then
+	apt-get update &>/dev/null
 	apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	elif [[ -e "$whichyum" ]]; then
