@@ -1,7 +1,13 @@
 v2.6 beta (26 Apr 2016)
-added php installation confirmation
-fixed caddy pid issue
-fixed not showing php version
+Fixed showing memory usage of Caddy
+PHP installation re-touched
+Added php fix for PHP-7 or later
+Fixed showing invalid value on Caddy remove
+
+v2.6 beta (26 Apr 2016)
+Added php installation confirmation
+Fixed caddy pid issue
+Fixed not showing php version
 
 v2.5 beta (16 Apr 2016)
 Fixed php issue
