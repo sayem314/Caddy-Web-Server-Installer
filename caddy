@@ -92,7 +92,6 @@ stopcaddy () {
 }
 
 caddystatus () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }' | sort -r`
 	if [[ ! -e $caddypath/caddy ]]; then
 	echo ""
 	echo "  Caddy is not installed."
