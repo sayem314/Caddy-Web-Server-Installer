@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v2.5 beta (16 Apr 2016)"
+cwsiv="v2.6 beta (26 Apr 2016)"
 
 about () {
 	echo ""
@@ -53,7 +53,7 @@ startcaddy () {
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy start
 		else
-			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
+			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=/var/run/caddy/caddy.pid &
 		fi
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
@@ -158,27 +158,50 @@ installcaddy () {
 	echo " $(tput setaf 2)DONE$(tput sgr0)"
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
+	installphp;
 	#Creating non-root user
 	useradd -r -d $caddypath -s /bin/false $caddyuser
 	chown $caddyuser $caddypath
 	chown $caddyuser $caddylog
-	#Installing required php files
-	echo -n "  Installing required php files..."
-	#Detecting apt-get/yum
-	whichaptget=`which apt-get`
-	whichyum=`which yum`
-	if [[ -e "$whichaptget" ]]; then
-	apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	elif [[ -e "$whichyum" ]]; then
-	yum install php-fpm php-cli curl sudo -y &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	else
-	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
-	fi
 	#Port setup
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 	echo "  Installed"
+}
+
+installphp () {
+	if [[ -e  "$caddypath" ]] ; then
+		echo ""
+		echo "  Would you like to install php?"
+		echo "                 1) YES"
+		echo "                 2) NO"
+		read -p "  Select an option: " option
+		case $option in
+			1)
+			#Installing required php files
+			echo -n "  Installing required php files..."
+			#Detecting apt-get/yum
+			whichaptget=`which apt-get`
+			whichyum=`which yum`
+			if [[ -e "$whichaptget" ]]; then
+			apt-get update &>/dev/null
+			apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			elif [[ -e "$whichyum" ]]; then
+			yum update &>/dev/null
+			yum install php-fpm php-cli curl sudo -y &>/dev/null
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			else
+			echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+			fi
+			fixphpfpm;
+			2) echo "  PHP installation skipped"
+			*)
+			echo "  you typed wrong!"
+		esac
+		else
+		echo ""
+		echo "  Looks like Caddy is not installed"
+	fi
 }
 
 fixphpfpm () {
@@ -410,10 +433,18 @@ deletecaddy () {
 versioninfo () {
 	caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
 	php5fpmversion=`php5-fpm -v | grep built`
+	phpfpmversion=`php-fpm -v | grep built`
 	echo ""
 	echo "  $caddyname $caddyserverversion"
 	echo "  Caddy Web Server Installer - $cwsiv"
-	echo "  $php5fpmversion"
+	#Detecting apt-get/yum
+	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
+	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
+	if [[ -e "$ubuntuphp5fpm" ]]; then
+	$php5fpmversion
+	elif [[ -e "$centosphpfpm" ]]; then
+	echo "  $phpfpmversion"
+	fi
 	echo ""
 }
 
@@ -433,6 +464,8 @@ case $1 in
 		amiroot; updatecaddy; fixphpfpm; caddyfile;;
 	'-fixphp'|'fixphp' )
 		amiroot; fixphpfpm;;
+	'-installphp'|'installphp' )
+		amiroot; installphp;;
 	'-service'|'service' )
 		amiroot; makeservice;;
 	'-del'|'delete'|'-rm' )
