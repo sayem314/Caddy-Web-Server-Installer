@@ -13,7 +13,7 @@ caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
 pid="`cat /var/run/caddy/caddy.pid`"
-cwsiv="v2.8 beta (16 May 2016)"
+cwsiv="v2.9 beta (05 Jun 2016)"
 
 about () {
 	echo ""
@@ -100,14 +100,14 @@ caddystatus () {
 	exit
 	fi
 	#Detect Caddy process
-	if [ -z "$pids" ] ; then
+	if [ -z "$pid" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
 		caddymemusage=`ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
-		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
+		echo "  Caddy (PID: $pid) is using $caddymemusage RAM"
 	fi
 	echo ""
 }
