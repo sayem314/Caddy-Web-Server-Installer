@@ -104,7 +104,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
-		caddymemusage=`ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
+		caddymemusage=`ps axo rss,comm,pid | grep $pid | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pid) is using $caddymemusage RAM"
