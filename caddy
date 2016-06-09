@@ -13,7 +13,7 @@ caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
 pid="`cat /var/run/caddy/caddy.pid`"
-cwsiv="v2.9 beta (05 Jun 2016)"
+cwsiv="v2.9 beta (09 Jun 2016)"
 
 about () {
 	echo ""
@@ -449,6 +449,10 @@ versioninfo () {
 	echo ""
 }
 
+editcaddyfile (){
+	editor $caddyfile
+}
+
 # See how we were called.
 case $1 in
 	'-start'|'start' )
@@ -467,6 +471,8 @@ case $1 in
 		amiroot; fixphpfpm;;
 	'-installphp'|'installphp' )
 		amiroot; installphp;;
+	'-edit'|'edit' )
+		amiroot; editcaddyfile;;
 	'-service'|'service' )
 		amiroot; makeservice;;
 	'-del'|'delete'|'-rm' )
