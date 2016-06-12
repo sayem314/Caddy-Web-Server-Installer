@@ -13,7 +13,7 @@ caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
 pid="`cat /var/run/caddy/caddy.pid`"
-cwsiv="v2.9 beta (09 Jun 2016)"
+cwsiv="v3.1 beta (12 Jun 2016)"
 
 about () {
 	echo ""
@@ -128,6 +128,7 @@ installcaddy () {
 		echo ""
 		exit;
 	fi
+
 	#Detect architecture
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="arch=amd64"
@@ -149,11 +150,14 @@ installcaddy () {
 		echo ""
 		exit;
 	fi
+
 	nocert="--no-check-certificate"
+
 	#Installing Caddy
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
 	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+
 	#Creating folders
 	echo ""
 	mkdir -p $caddypath
@@ -165,11 +169,18 @@ installcaddy () {
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
 	installphp;
+
 	#Creating non-root user
 	useradd -r -d $caddypath -s /bin/false $caddyuser
 	chown $caddyuser $caddypath
 	chown $caddyuser $caddylog
+
 	#Port setup
+	#Detecting apt-get/yum
+	whichaptget=`which apt-get`
+	if [[ -e "$whichaptget" ]]; then
+		apt-get install libcap2-bin -y &>/dev/null
+	fi
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 }
 
@@ -184,13 +195,13 @@ installphp () {
 			whichaptget=`which apt-get`
 			whichyum=`which yum`
 			if [[ -e "$whichaptget" ]]; then
-			apt-get update -y &>/dev/null && apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+				apt-get update -y &>/dev/null && apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
+				echo "  $(tput setaf 2)DONE$(tput sgr0)"
 			elif [[ -e "$whichyum" ]]; then
-			yum update -y &>/dev/null && yum install php-fpm php-cli curl sudo -y &>/dev/null
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+				yum update -y &>/dev/null && yum install php-fpm php-cli curl sudo -y &>/dev/null
+				echo "  $(tput setaf 2)DONE$(tput sgr0)"
 			else
-			echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+				echo "  $(tput setaf 1)FAILED$(tput sgr0)"
 			fi
 			fixphpfpm;
 		;;
@@ -208,6 +219,7 @@ fixphpfpm () {
 	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
 	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
 	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+
 	#Detect php5-fpm or php-fpm
 	echo -n "  Fixing php..."
 	#Ubuntu
@@ -216,12 +228,14 @@ fixphpfpm () {
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
 	service php5-fpm restart
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+
 	#CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
 	rm -f $centosphpfpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
 	service php-fpm restart
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	rm -f $phpfpm7
@@ -264,6 +278,7 @@ fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
 	mkdir -p $caddywww
 	chown $caddyuser $caddywww
 	fi
+
 	#Generate example html
 	if [[ ! -e $caddywww/index.html ]]; then
 	echo "<TITLE>Caddy Default Page</TITLE>
@@ -298,6 +313,7 @@ updatecaddy () {
 		echo ""
 		exit;
 	fi
+
 	#Detect architecture
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="arch=amd64"
@@ -319,7 +335,9 @@ updatecaddy () {
 		echo ""
 		exit;
 	fi
+
 	nocert="--no-check-certificate"
+
 	#Updating Caddy
 	caddyserverversion=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
@@ -328,12 +346,14 @@ updatecaddy () {
 	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	sleep 0.1
+
 	#Delete Caddy folder
 	echo "  Removing Caddy directory $caddypath"
 	sleep 0.3
 	rm -rf $caddypath/*
 	echo "  Done"
 	sleep 0.1
+
 	#Extract Caddy on created folder
 	echo "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
