@@ -175,9 +175,10 @@ installcaddy () {
 	chown $caddyuser $caddypath
 	chown $caddyuser $caddylog
 
-	#Port setup
 	#Detecting apt-get/yum
-	whichaptget=`which apt-get`
+	whichaptget="`which apt-get`"
+	#Port setup
+	echo "  Setting setcap to bind port over 80 and 443"
 	if [[ -e "$whichaptget" ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
 	fi
@@ -426,17 +427,16 @@ EOL
 deletecaddy () {
 	if [[ -e  "$caddypath" ]] ; then
 		echo ""
-		echo "  Are you sure you want to delete caddy?"
-		echo "                 1) YES"
-		echo "                 2) NO"
+		echo "  Are you sure you want to uninstall Caddy web server? [y/N]"
 		read -p "  Select an option: " option
 		case $option in
-			1)
+			[yY][eE][sS]|[yY])
 			echo ""
 			service caddy stop &>/dev/null
+			stopcaddy &>/dev/null
 			rm -rf $caddypath #deleting caddy web server folder
 			rm $caddyfile #deleting caddyfile
-			rm -rf $caddywww #deleting caddy html folder
+			deletecaddydata;
 			userdel $caddyuser #delete caddy user
 			init=`cat /proc/1/comm`
 			if [ "$init" == 'init' ]; then
@@ -449,7 +449,7 @@ deletecaddy () {
 			echo ""
 			exit
 			;;
-			2) exit;;
+			[nN][oO]|[nN]) exit;;
 			*) echo ""; echo "  Incorrect input, try again! ";;
 		esac
 		else
@@ -457,6 +457,21 @@ deletecaddy () {
 		echo "  Looks like Caddy is not installed"
 	fi
 	echo ""
+}
+
+deletecaddydata () {
+		read -r -p "  Would you also like to delete caddywww (data)? [y/N]: " option
+		case $option in
+		[yY][eE][sS]|[yY])
+			echo -n "  Deleting caddywww (data)..."
+			sleep 2
+			rm -rf $caddywww #deleting caddy html folder
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		;;
+		*)
+          echo "  Removing caddywww (data)... $(tput setaf 5)Skipped$(tput sgr0)"
+          ;;
+		esac
 }
 
 versioninfo () {
