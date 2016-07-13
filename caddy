@@ -13,7 +13,7 @@ caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
 pid="`cat /var/run/caddy/caddy.pid`"
-cwsiv="v3.1 beta (12 Jun 2016)"
+cwsiv="v3.2 beta (13 Jul 2016)"
 
 about () {
 	echo ""
@@ -262,13 +262,14 @@ caddyfile () {
 	echo ""
 	echo "  Enter your email for automated ssl"
 	read -p "  Email: " domainmail
-	echo "$domainname
+	echo "$domainname {
 tls $domainmail
 root $caddywww
 gzip
 log $caddylog/access.log
 errors $caddylog/error.log
-fastcgi / /var/run/php5-fpm.sock php" >> $caddyfile
+fastcgi / /var/run/php5-fpm.sock php
+}" >> $caddyfile
 	echo ""
 	echo "  Caddyfile created"
 	else
