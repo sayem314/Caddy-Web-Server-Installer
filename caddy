@@ -16,8 +16,6 @@ cwsiv="v3.3 beta (04 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pid="`cat /var/run/caddy/caddy.pid`"
-else
-	pid="/var/run/caddy/caddy.pid"
 fi
 
 about () {
