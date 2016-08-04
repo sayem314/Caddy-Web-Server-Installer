@@ -12,8 +12,13 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-pid="`cat /var/run/caddy/caddy.pid`"
-cwsiv="v3.2 beta (13 Jul 2016)"
+cwsiv="v3.3 beta (04 Aug 2016)"
+
+if [[ -e "/var/run/caddy/caddy.pid" ]]; then
+	pid="`cat /var/run/caddy/caddy.pid`"
+else
+	pid="/var/run/caddy/caddy.pid"
+fi
 
 about () {
 	echo ""
@@ -196,10 +201,10 @@ installphp () {
 			whichaptget=`which apt-get`
 			whichyum=`which yum`
 			if [[ -e "$whichaptget" ]]; then
-				apt-get update -y &>/dev/null && apt-get install php5-fpm php5-cli curl sudo -y &>/dev/null
+				apt-get update -y &>/dev/null && apt-get install php5-fpm php5-cli php5-curl curl sudo -y &>/dev/null
 				echo "  $(tput setaf 2)DONE$(tput sgr0)"
 			elif [[ -e "$whichyum" ]]; then
-				yum update -y &>/dev/null && yum install php-fpm php-cli curl sudo -y &>/dev/null
+				yum update -y &>/dev/null && yum install php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  $(tput setaf 2)DONE$(tput sgr0)"
 			else
 				echo "  $(tput setaf 1)FAILED$(tput sgr0)"
