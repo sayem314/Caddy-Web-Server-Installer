@@ -3,7 +3,7 @@
 
 Download **caddy.sh** and run **bash caddy.sh**<br>
 ####Or
-<code>wget raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/caddy.sh -O - -o /dev/null|bash</code>
+<code>wget https://git.io/vra5C -O - -o /dev/null|bash</code>
 
 This will download and install caddy and create the necessary files.<br>
 Caddy will then run as non-root user "caddy".
