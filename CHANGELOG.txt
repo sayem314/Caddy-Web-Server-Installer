@@ -1,3 +1,18 @@
+v3.4 beta (05 Aug 2016)
+Added process uptime feature
+Fixed mixed output of fixphp
+Fixed minor update issue
+Fixed restart issue
+Fixed pidfile issue for init
+
+v3.3 beta (04 Aug 2016)
+Fixed minor issue
+Added php/php5-curl support
+
+v3.2 beta (13 Jul 2016)
+prompt to keep data or not when uninstalling
+added few echo lines
+
 v3.1 beta (12 Jun 2016)
 Fixed setcap bugs for ubuntu
 
