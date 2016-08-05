@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.3 beta (04 Aug 2016)"
+cwsiv="v3.4 beta (05 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pid="`cat /var/run/caddy/caddy.pid`"
@@ -108,11 +108,14 @@ caddystatus () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
 		caddymemusage=`ps axo rss,comm,pid | grep $pid | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
+		secs="`ps -p $pid -o etimes= | awk '{print $1}'`"
+		caddyuptime="`printf '%dd:%dh:%dm:%ds\n' $(($secs/86400)) $(($secs/3600)) $(($secs%3600/60)) $(($secs%60))`"
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pid) is using $caddymemusage RAM"
+		echo "  Uptime - $caddyuptime"
+		echo ""
 	fi
-	echo ""
 }
 
 amiroot () {
@@ -149,7 +152,8 @@ installcaddy () {
 		cpubits="arch=arm&arm=7"
 		cpubitsname="for (ARM 7)..."
 	else
-		echo "unsupported or unknown architecture"
+		echo ""
+		echo "  unsupported or unknown architecture"
 		echo ""
 		exit;
 	fi
@@ -165,6 +169,7 @@ installcaddy () {
 	echo ""
 	mkdir -p $caddypath
 	mkdir -p $caddylog
+	
 	#Extract Caddy on created folder
 	echo -n "  Extracting $caddyname to $caddypath..."
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
@@ -179,7 +184,9 @@ installcaddy () {
 	chown $caddyuser $caddylog
 
 	#Detecting apt-get/yum
+	#beta. to-do improve on next version
 	whichaptget="`which apt-get`"
+	
 	#Port setup
 	echo "  Setting setcap to bind port over 80 and 443"
 	if [[ -e "$whichaptget" ]]; then
@@ -190,6 +197,8 @@ installcaddy () {
 
 installphp () {
 	if [[ -e  "$caddypath" ]] ; then
+		echo "  Type N for Ubuntu 16.x"
+		echo "  You have to manually install php for Ubuntu 16.x"
 		read -r -p "  Would you like to install php? [y/N]: " option
 		case $option in
 		[yY][eE][sS]|[yY])
@@ -225,9 +234,9 @@ fixphpfpm () {
 	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
 
 	#Detect php5-fpm or php-fpm
-	echo -n "  Fixing php..."
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
+	echo -n "  Fixing php..."
 	rm -f $ubuntuphp5fpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
 	service php5-fpm restart
@@ -235,6 +244,7 @@ fixphpfpm () {
 
 	#CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
+	echo -n "  Fixing php..."
 	rm -f $centosphpfpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
 	service php-fpm restart
@@ -242,12 +252,14 @@ fixphpfpm () {
 
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
+	echo "  Fixing php..."
 	rm -f $phpfpm7
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/php7.conf" -O $phpfpm7
 	/etc/init.d/php7.0-fpm restart
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  DONE"
 	
 	else
+	echo -n "  Fixing php..."
 	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
 	echo "  php not found!"
 	echo ""
@@ -319,6 +331,13 @@ updatecaddy () {
 		exit;
 	fi
 
+	#Stop process
+	if [ -e "/var/run/caddy/caddy.pid" ] ; then
+		echo ""
+		echo "  Found Caddy is running"
+		stopcaddy;
+	fi
+
 	#Detect architecture
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="arch=amd64"
@@ -353,16 +372,16 @@ updatecaddy () {
 	sleep 0.1
 
 	#Delete Caddy folder
-	echo "  Removing Caddy directory $caddypath"
+	echo -n "  Removing Caddy directory $caddypath"
 	sleep 0.3
 	rm -rf $caddypath/*
-	echo "  Done"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	sleep 0.1
 
 	#Extract Caddy on created folder
-	echo "  Extracting $caddyname to $caddypath"
+	echo -n "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
-	echo "  Done"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
@@ -397,7 +416,7 @@ pre-start script
  exit 0
 end script
 
-exec ${caddypath}/caddy -conf="${caddyfile}" -quiet=true
+exec ${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid
 EOL
 
 	elif [ "$init" == 'systemd' ]; then
@@ -499,7 +518,7 @@ case $1 in
 	'-stop'|'stop' )
 		stopcaddy;;
 	'-restart'|'restart'|'-reload'|'reload' )
-		stopcaddy; startcaddy;;
+		stopcaddy; sleep 1; startcaddy;;
 	'-status'|'status' )
 		caddystatus;;
 	'-install'|'install' )
