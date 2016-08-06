@@ -1,7 +1,13 @@
 #!/bin/bash
-#
-# Caddy Web Server Startup
-#
+### BEGIN INIT INFO
+# Provides:          Caddy Web Server Startup
+# Required-Start:    
+# Required-Stop:     
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start Caddy Web Server on boot
+# Description:       Enable Caddy Web Server on boot
+### END INIT INFO
 
 do_start () {
 	/usr/local/bin/caddy start
