@@ -1,3 +1,7 @@
+v3.6 beta (06 Aug 2016)
+Fixed service issue
+Fixed not showing uptime on CentOS 6.x
+
 v3.5 beta (06 Aug 2016)
 Added support for Ubuntu 16.04 and 16.10
 Chnaged service type
