@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.5 beta (06 Aug 2016)"
+cwsiv="v3.6 beta (06 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pid="`cat /var/run/caddy/caddy.pid`"
@@ -109,7 +109,7 @@ caddystatus () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 	else
 		caddymemusage=`ps axo rss,comm,pid | grep $pid | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
-		secs="`ps -p $pid -o etimes= | awk '{print $1}'`"
+		secs="`ps -p $pid -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
 		caddyuptime="`printf '%dd:%dh:%dm:%ds\n' $(($secs/86400)) $(($secs/3600)) $(($secs%3600/60)) $(($secs%60))`"
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
@@ -185,12 +185,13 @@ installcaddy () {
 	chown $caddyuser $caddylog
 
 	#Port setup
-	echo "  Setting setcap to bind port over 80 and 443"
 	APT_GET_CMD="/usr/bin/apt-get"
+	echo -n "  Binding port..."
 	if [[ ! -z $APT_GET_CMD ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
 	fi
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 }
 
 installphp () {
@@ -438,69 +439,23 @@ updatecaddy () {
 
 makeservice () {
 	nocert="--no-check-certificate"
+	#Download
 	echo -n "  Creating service..."
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/runcaddy.sh"
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-}
+	chmod +x /etc/init.d/runcaddy.sh
 
-makeservice.b () {
-  # Heuristic check for init > TODO improve!
-	init=`cat /proc/1/comm`
-	if [ "$init" == 'init' ]; then
-
-		cat > /etc/init/caddy.conf <<EOL
-# ${caddyname} Service
-
-description     "${caddyname}"
-
-start on (net-device-up	and runlevel [2345])
-stop on runlevel [016]
-
-setuid ${caddyuser}
-
-respawn
-respawn limit 10 5
-
-limit nofile 4096 4096
-
-pre-start script
- [ ! -f "${caddyfile}" ] && { stop; exit 1; }
- [ ! -e "${caddypath}/caddy" ] && { stop; exit 1; }
- service php5-fpm start
- exit 0
-end script
-
-exec ${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid
-EOL
-
-	elif [ "$init" == 'systemd' ]; then
-
-		cat > /etc/systemd/system/caddy.service <<EOL
-[Unit]
-Description=${caddyname}
-After=network.target
-
-[Service]
-User=${caddyuser}
-LimitNOFILE=4096
-PIDFile=/var/run/caddy/caddy.pid
-ExecStartPre=[ -f ${caddyfile} ]
-ExecStartPre=[ -e ${caddypath}/caddy ]
-ExecStartPre=service php5-fpm start
-ExecStart=${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid
-Restart=on-failure
-StartLimitInterval=600
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-	systemctl enable caddy &>/dev/null
-	fi
-	sleep 1
-	echo ""
-	echo "  Service created"
-	echo ""
+	#Enable
+	YUM_CMD=$(which yum)
+  	APT_GET_CMD="/usr/bin/apt-get"
+	if [[ ! -z $YUM_CMD ]]; then
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		chkconfig runcaddy.sh on
+ 	elif [[ ! -z $APT_GET_CMD ]]; then
+ 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		update-rc.d runcaddy.sh defaults
+   	else
+		echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+ 	fi
 }
 
 deletecaddy () {
