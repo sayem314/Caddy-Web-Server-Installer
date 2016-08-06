@@ -312,7 +312,7 @@ caddyfile () {
 	if [[ -e "$chkphpfpm7" ]] ; then
 		phpsock="127.0.0.1:9000 php"
 	else
-		phpsock= "/var/run/php5-fpm.sock php"
+		phpsock="/var/run/php5-fpm.sock php"
 	fi
 	#Check if Caddyfile exist
 	#Generate Caddyfile
