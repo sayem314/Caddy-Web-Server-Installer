@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.4 beta (05 Aug 2016)"
+cwsiv="v3.5 beta (06 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pid="`cat /var/run/caddy/caddy.pid`"
@@ -58,13 +58,14 @@ startcaddy () {
 	fi
 	if [ -z "$pids" ] ; then
 		echo ""
-		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy start
 		else
+			echo -n "  Starting $caddyname..."
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=/var/run/caddy/caddy.pid &
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		fi
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		restartphpfpm;
 		echo ""
 	else
 		echo ""
@@ -81,15 +82,15 @@ stopcaddy () {
 		echo ""
 	else
 		echo ""
-		echo -n "  Shutting down $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy stop
 		else
+			echo -n "  Shutting down $caddyname..."
 			kill $pid
 			kill $pids
 			rm -f $pids
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		fi
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
 	fi
 }
@@ -183,13 +184,10 @@ installcaddy () {
 	chown $caddyuser $caddypath
 	chown $caddyuser $caddylog
 
-	#Detecting apt-get/yum
-	#beta. to-do improve on next version
-	whichaptget="`which apt-get`"
-	
 	#Port setup
 	echo "  Setting setcap to bind port over 80 and 443"
-	if [[ -e "$whichaptget" ]]; then
+	APT_GET_CMD="/usr/bin/apt-get"
+	if [[ ! -z $APT_GET_CMD ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
 	fi
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
@@ -197,25 +195,38 @@ installcaddy () {
 
 installphp () {
 	if [[ -e  "$caddypath" ]] ; then
-		echo "  Type N for Ubuntu 16.x"
-		echo "  You have to manually install php for Ubuntu 16.x"
 		read -r -p "  Would you like to install php? [y/N]: " option
 		case $option in
 		[yY][eE][sS]|[yY])
 			#Installing required php files
 			echo -n "  Installing required php files..."
+
 			#Detecting apt-get/yum
-			whichaptget=`which apt-get`
-			whichyum=`which yum`
-			if [[ -e "$whichaptget" ]]; then
-				apt-get update -y &>/dev/null && apt-get install php5-fpm php5-cli php5-curl curl sudo -y &>/dev/null
-				echo "  $(tput setaf 2)DONE$(tput sgr0)"
-			elif [[ -e "$whichyum" ]]; then
+			YUM_CMD=$(which yum)
+  			APT_GET_CMD="/usr/bin/apt-get"
+			if [[ ! -z $APT_GET_CMD ]]; then
+				CODENAME=`cat /etc/*-release | grep "VERSION="`
+				CODENAME=${CODENAME##*\(}
+				CODENAME=${CODENAME%%\)*}
+			fi
+
+			#Setup PHP
+			if [[ "$CODENAME" == "Xenial Xerus" || "$CODENAME" == "Yakkety Yak" ]]; then
+				PHP="php7.0"
+			else
+				PHP="php5"
+			fi
+
+			#Install PHP
+			if [[ ! -z $YUM_CMD ]]; then
 				yum update -y &>/dev/null && yum install php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  $(tput setaf 2)DONE$(tput sgr0)"
-			else
+ 			elif [[ ! -z $APT_GET_CMD ]]; then
+				apt-get update -y &>/dev/null && apt-get install $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
+				echo "  $(tput setaf 2)DONE$(tput sgr0)"
+   			else
 				echo "  $(tput setaf 1)FAILED$(tput sgr0)"
-			fi
+ 			fi
 			fixphpfpm;
 		;;
 		*)
@@ -231,6 +242,7 @@ fixphpfpm () {
 	nocert="--no-check-certificate"
 	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
 	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
+	centosphpfpm2="/etc/php-fpm.d/www.conf"
 	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
 
 	#Detect php5-fpm or php-fpm
@@ -239,7 +251,6 @@ fixphpfpm () {
 	echo -n "  Fixing php..."
 	rm -f $ubuntuphp5fpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
-	service php5-fpm restart
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 	#CentOS
@@ -247,16 +258,21 @@ fixphpfpm () {
 	echo -n "  Fixing php..."
 	rm -f $centosphpfpm
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
-	service php-fpm restart
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+
+	#CentOS 2
+	elif [[ -e "$centosphpfpm2" ]] ; then
+	echo -n "  Fixing php..."
+	rm -f $centosphpfpm2
+	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm2
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
-	echo "  Fixing php..."
+	echo -n "  Fixing php..."
 	rm -f $phpfpm7
 	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/php7.conf" -O $phpfpm7
-	/etc/init.d/php7.0-fpm restart
-	echo "  DONE"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	
 	else
 	echo -n "  Fixing php..."
@@ -266,7 +282,38 @@ fixphpfpm () {
 	fi
 }
 
+restartphpfpm () {
+	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
+	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
+	centosphpfpm2="/etc/php-fpm.d/www.conf"
+	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+
+	#Ubuntu
+	if [[ -e "$ubuntuphp5fpm" ]] ; then
+	echo -n "  Restarting php5-fpm..."
+	service php5-fpm restart
+
+	#CentOS
+	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
+	echo -n "  Restarting php5-fpm..."
+	service php-fpm restart
+
+	#PHP 7
+	elif [[ -e "$phpfpm7" ]] ; then
+	echo -n "  Restarting php7.0-fpm..."
+	/etc/init.d/php7.0-fpm restart
+	
+	fi
+}
+
 caddyfile () {
+	#PHP 7
+	chkphpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+	if [[ -e "$chkphpfpm7" ]] ; then
+		phpsock="127.0.0.1:9000 php"
+	else
+		phpsock= "/var/run/php5-fpm.sock php"
+	fi
 	#Check if Caddyfile exist
 	#Generate Caddyfile
 	if [[ ! -e $caddyfile ]]; then
@@ -283,7 +330,7 @@ root $caddywww
 gzip
 log $caddylog/access.log
 errors $caddylog/error.log
-fastcgi / /var/run/php5-fpm.sock php
+fastcgi / $phpsock
 }" >> $caddyfile
 	echo ""
 	echo "  Caddyfile created"
@@ -385,11 +432,18 @@ updatecaddy () {
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
-	echo "  Updated $caddyserverversion"
+	echo "  Updated to $caddyserverversion"
 	echo ""
 }
 
 makeservice () {
+	nocert="--no-check-certificate"
+	echo -n "  Creating service..."
+	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/runcaddy.sh"
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+}
+
+makeservice.b () {
   # Heuristic check for init > TODO improve!
 	init=`cat /proc/1/comm`
 	if [ "$init" == 'init' ]; then
@@ -443,6 +497,8 @@ EOL
 
 	systemctl enable caddy &>/dev/null
 	fi
+	sleep 1
+	echo ""
 	echo "  Service created"
 	echo ""
 }
@@ -454,11 +510,9 @@ deletecaddy () {
 		read -p "  Select an option: " option
 		case $option in
 			[yY][eE][sS]|[yY])
-			echo ""
-			service caddy stop &>/dev/null
-			stopcaddy &>/dev/null
-			rm -rf $caddypath #deleting caddy web server folder
-			rm $caddyfile #deleting caddyfile
+			stopcaddy;
+			rm -rf $caddypath &>/dev/null #deleting caddy web server folder
+			rm $caddyfile &>/dev/null #deleting caddyfile
 			deletecaddydata;
 			userdel $caddyuser #delete caddy user
 			init=`cat /proc/1/comm`
