@@ -1,3 +1,7 @@
+v3.7 beta (08 Aug 2016)
+Fixed and improved uptime issue
+Added system free RAM to show on status
+
 v3.6 beta (06 Aug 2016)
 Fixed service issue
 Fixed not showing uptime on CentOS 6.x
