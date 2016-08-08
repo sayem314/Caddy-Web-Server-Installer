@@ -12,7 +12,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.6 beta (06 Aug 2016)"
+cwsiv="v3.7 beta (08 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pid="`cat /var/run/caddy/caddy.pid`"
@@ -107,13 +107,23 @@ caddystatus () {
 	if [ -z "$pid" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
+		echo ""
 	else
 		caddymemusage=`ps axo rss,comm,pid | grep $pid | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
 		secs="`ps -p $pid -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
-		caddyuptime="`printf '%dd:%dh:%dm:%ds\n' $(($secs/86400)) $(($secs/3600)) $(($secs%3600/60)) $(($secs%60))`"
+		if [[ $secs -lt 120 ]]; then
+			caddyuptime="$secs seconds"
+		elif [[ $secs -lt 3600 ]]; then
+			caddyuptime="`printf '%d minutes %d seconds\n' $(($secs%3600/60)) $(($secs%60))`"
+		elif [[ $secs -lt 86400 ]]; then
+			caddyuptime="`printf '%d hrs %d min %d sec\n' $(($secs/3600)) $(($secs%3600/60)) $(($secs%60))`"
+		else
+			caddyuptime="`echo $((secs/86400))" days, "$(date -d "1970-01-01 + $secs seconds" "+%H hrs %M min %S sec")`"
+		fi
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pid) is using $caddymemusage RAM"
+		echo "  System free RAM $(free -t -h | egrep Mem | awk '{print $4}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
 	fi
@@ -305,6 +315,7 @@ restartphpfpm () {
 	/etc/init.d/php7.0-fpm restart
 	
 	fi
+	echo ""
 }
 
 caddyfile () {
