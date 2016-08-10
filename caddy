@@ -42,6 +42,7 @@ prms () {
 	echo "  caddy restart        - Restart $caddyname"
 	echo "  caddy status         - Check $caddyname running or not"
 	echo "  caddy install        - Install $caddyname on fresh OS"
+	echo "  caddy edit           - Edit Caddyfile using the default editor"
 	echo "  caddy service        - Make $caddyname a service (upstart/systemd)"
 	echo "  caddy update         - Update $caddyname"
 	echo "  caddy delete         - Uninstall Caddy and data."
