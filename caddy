@@ -1,8 +1,7 @@
 #!/bin/bash
 #
-#
 # Caddy Web Server Installer
-#
+# https://github.com/sayem314/Caddy-Web-Server-Installer
 #
 
 # Global config
@@ -12,10 +11,12 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.7 beta (08 Aug 2016)"
+cwsiv="v3.8 beta (11 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
-	pid="`cat /var/run/caddy/caddy.pid`"
+	pids="`cat /var/run/caddy/caddy.pid`"
+else
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 fi
 
 about () {
@@ -42,7 +43,7 @@ prms () {
 	echo "  caddy restart        - Restart $caddyname"
 	echo "  caddy status         - Check $caddyname running or not"
 	echo "  caddy install        - Install $caddyname on fresh OS"
-	echo "  caddy edit           - Edit Caddyfile using the default editor"
+	echo "  caddy edit           - Edit Caddyfile using the default editor" 
 	echo "  caddy service        - Make $caddyname a service (upstart/systemd)"
 	echo "  caddy update         - Update $caddyname"
 	echo "  caddy delete         - Uninstall Caddy and data."
@@ -70,13 +71,12 @@ startcaddy () {
 		echo ""
 	else
 		echo ""
-		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pid (PID)"
+		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pids (PID)"
 		echo ""
 	fi
 }
 
 stopcaddy () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }' | sort -r`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
@@ -87,7 +87,6 @@ stopcaddy () {
 			service caddy stop
 		else
 			echo -n "  Shutting down $caddyname..."
-			kill $pid
 			kill $pids
 			rm -f $pids
 			echo "  $(tput setaf 2)DONE$(tput sgr0)"
@@ -105,13 +104,13 @@ caddystatus () {
 	exit
 	fi
 	#Detect Caddy process
-	if [ -z "$pid" ] ; then
+	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		caddymemusage=`ps axo rss,comm,pid | grep $pid | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
-		secs="`ps -p $pid -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
+		caddymemusage=`ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
+		secs="`ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
 		if [[ $secs -lt 120 ]]; then
 			caddyuptime="$secs seconds"
 		elif [[ $secs -lt 3600 ]]; then
@@ -123,7 +122,7 @@ caddystatus () {
 		fi
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
-		echo "  Caddy (PID: $pid) is using $caddymemusage RAM"
+		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
 		echo "  System free RAM $(free -t -h | egrep Mem | awk '{print $4}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
@@ -261,29 +260,29 @@ fixphpfpm () {
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	echo -n "  Fixing php..."
-	rm -f $ubuntuphp5fpm
-	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $ubuntuphp5fpm
+	sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
+	sed -i 's/group = .*/group = caddy/g' $ubuntuphp5fpm
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 	#CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
 	echo -n "  Fixing php..."
-	rm -f $centosphpfpm
-	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm
+	sed -i 's/user = .*/user = caddy/g' $centosphpfpm
+	sed -i 's/group = .*/group = caddy/g' $centosphpfpm
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 	#CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
 	echo -n "  Fixing php..."
-	rm -f $centosphpfpm2
-	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/caddy-www.conf" -O $centosphpfpm2
+	sed -i 's/user = .*/user = caddy/g' $centosphpfpm2
+	sed -i 's/group = .*/group = caddy/g' $centosphpfpm2
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	echo -n "  Fixing php..."
-	rm -f $phpfpm7
-	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/php7.conf" -O $phpfpm7
+	sed -i 's/user = .*/user = caddy/g' $phpfpm7
+	sed -i 's/group = .*/group = caddy/g' $phpfpm7
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	
 	else
@@ -303,30 +302,27 @@ restartphpfpm () {
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	echo -n "  Restarting php5-fpm..."
-	service php5-fpm restart
+	service php5-fpm reload
 
 	#CentOS
 	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
 	echo -n "  Restarting php5-fpm..."
-	service php-fpm restart
+	service php-fpm reload
 
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	echo -n "  Restarting php7.0-fpm..."
-	/etc/init.d/php7.0-fpm restart
+	/etc/init.d/php7.0-fpm reload
 	
 	fi
 	echo ""
 }
 
 caddyfile () {
-	#PHP 7
-	chkphpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
-	if [[ -e "$chkphpfpm7" ]] ; then
-		phpsock="127.0.0.1:9000 php"
-	else
-		phpsock="/var/run/php5-fpm.sock php"
-	fi
+	# find php-fpm config
+	findphp=$( echo `find / -name www.conf` )
+	phpsock="`cat $findphp | grep "listen = *" | cut -c 10-`"
+
 	#Check if Caddyfile exist
 	#Generate Caddyfile
 	if [[ ! -e $caddyfile ]]; then
@@ -343,7 +339,7 @@ root $caddywww
 gzip
 log $caddylog/access.log
 errors $caddylog/error.log
-fastcgi / $phpsock
+fastcgi / $phpsock php
 }" >> $caddyfile
 	echo ""
 	echo "  Caddyfile created"
@@ -373,6 +369,14 @@ You should <font color="#D03C3C">replace this file</font>
 	else
 	echo "  index.html found. Skip ... "
 	fi
+
+	# phpinfo
+	if [[ ! -e $caddywww/info.php ]]; then
+		echo "<?php phpinfo(); ?>" >> $caddywww/info.php
+		echo "  PHP-info file created"
+		echo "  $caddywww/info.php"
+	fi
+
 	echo ""
 	echo "  Done. Caddy has been installed :)"
 	echo "  Run $(tput setaf 3)caddy start$(tput sgr0) to start $caddyname"
@@ -451,23 +455,44 @@ updatecaddy () {
 
 makeservice () {
 	nocert="--no-check-certificate"
-	#Download
+	init=`cat /proc/1/comm`
 	echo -n "  Creating service..."
-	wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/runcaddy.sh"
-	chmod +x /etc/init.d/runcaddy.sh
+	if [ "$init" == 'systemd' ]; then
+		rm -f /etc/systemd/system/caddy.service
+		echo "[Unit]
+Description=Caddy HTTP/2 web server
+After=network.target
 
-	#Enable
-	YUM_CMD=$(which yum)
-  	APT_GET_CMD="/usr/bin/apt-get"
-	if [[ ! -z $YUM_CMD ]]; then
-		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-		chkconfig runcaddy.sh on
- 	elif [[ ! -z $APT_GET_CMD ]]; then
- 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
-		update-rc.d runcaddy.sh defaults
-   	else
-		echo "  $(tput setaf 1)FAILED$(tput sgr0)"
- 	fi
+[Service]
+User=$caddyuser
+Group=$caddyuser
+Type=simple
+ExecStart=$caddypath/caddy -conf=$caddyfile -quiet=true -pidfile=/var/run/caddy/caddy.pid
+ExecStop=/bin/kill -USR1 $MAINPID
+PIDFile=/var/run/caddy/caddy.pid
+
+[Install]
+WantedBy=multi-user.target" >> /etc/systemd/system/caddy.service
+	chmod 0644 /etc/systemd/system/caddy.service
+	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	systemctl enable caddy
+	else
+		#Download
+		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
+		chmod +x /etc/init.d/caddy.sh
+		#Enable
+		YUM_CMD=$(which yum)
+  		APT_GET_CMD="/usr/bin/apt-get"
+		if [[ ! -z $YUM_CMD ]]; then
+			chkconfig caddy.sh on
+			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+ 		elif [[ ! -z $APT_GET_CMD ]]; then
+ 			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			update-rc.d caddy.sh defaults
+   		else
+			echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+ 		fi
+	fi
 }
 
 deletecaddy () {
