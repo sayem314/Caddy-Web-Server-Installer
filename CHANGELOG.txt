@@ -1,3 +1,11 @@
+v3.8 beta (11 Aug 2016)
+Added systemd service system
+Change php setup style
+Changed php listen
+PHP-info created automatically
+Fixed other bugs
+Fixed can't detect PID when using service
+
 v3.7 beta (08 Aug 2016)
 Fixed and improved uptime issue
 Added system free RAM to show on status
