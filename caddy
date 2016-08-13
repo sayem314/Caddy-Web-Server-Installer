@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v3.8 beta (11 Aug 2016)"
+cwsiv="v3.9 beta (13 Aug 2016)"
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pids="`cat /var/run/caddy/caddy.pid`"
@@ -230,10 +230,10 @@ installphp () {
 
 			#Install PHP
 			if [[ ! -z $YUM_CMD ]]; then
-				yum update -y &>/dev/null && yum install php-fpm php-cli php-curl curl sudo -y &>/dev/null
+				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  $(tput setaf 2)DONE$(tput sgr0)"
  			elif [[ ! -z $APT_GET_CMD ]]; then
-				apt-get update -y &>/dev/null && apt-get install $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
+				apt-get update -y &>/dev/null && apt-get install sed $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
 				echo "  $(tput setaf 2)DONE$(tput sgr0)"
    			else
 				echo "  $(tput setaf 1)FAILED$(tput sgr0)"
@@ -302,12 +302,12 @@ restartphpfpm () {
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	echo -n "  Restarting php5-fpm..."
-	service php5-fpm reload
+	service php5-fpm restart
 
 	#CentOS
 	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
 	echo -n "  Restarting php5-fpm..."
-	service php-fpm reload
+	service php-fpm restart
 
 	#PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
@@ -319,9 +319,32 @@ restartphpfpm () {
 }
 
 caddyfile () {
-	# find php-fpm config
-	findphp=$( echo `find / -name www.conf` )
-	phpsock="`cat $findphp | grep "listen = *" | cut -c 10-`"
+	#Detect php
+	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
+	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
+	centosphpfpm2="/etc/php-fpm.d/www.conf"
+	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+
+	#Ubuntu
+	if [[ -e "$ubuntuphp5fpm" ]] ; then
+	phpsock="`cat $ubuntuphp5fpm | grep "listen = *" | cut -c 10-`"
+	
+	#CentOS
+	elif [[ -e "$centosphpfpm" ]] ; then
+	phpsock="`cat $centosphpfpm | grep "listen = *" | cut -c 10-`"
+
+	#CentOS 2
+	elif [[ -e "$centosphpfpm2" ]] ; then
+	phpsock="`cat $centosphpfpm2 | grep "listen = *" | cut -c 10-`"
+
+	#PHP 7
+	elif [[ -e "$phpfpm7" ]] ; then
+	sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $phpfpm7
+	phpsock="`cat $phpfpm7 | grep "listen = *" | cut -c 10-`"
+	
+	else
+	phpsock="127.0.0.1:9000"
+	fi
 
 	#Check if Caddyfile exist
 	#Generate Caddyfile
