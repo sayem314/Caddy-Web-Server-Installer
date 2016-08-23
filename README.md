@@ -47,3 +47,8 @@ Once done, you can use below command:
 ### Contribute?
 
 Contributions are always welcome - if you have any code to contribute, simply fork this and submit a pull request! Otherwise, if you find any bugs or issues, please open an issue!
+
+### Donations
+
+If you want to show your appreciation, you can donate via Bitcoin. Thanks!
+16xPekxvRoCiG12iFG1SNUW1tSuPfxxNoV
