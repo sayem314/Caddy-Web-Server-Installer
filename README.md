@@ -22,6 +22,8 @@ Once done, you can use below command:
 
 > *caddy stop*           - Stop/Shutdown Caddy Web Server </hr>
 
+> *caddy reload*         - Reload Caddy Web Server </hr>
+
 > *caddy restart*        - Restart Caddy Web Server</code </hr>
 
 > *caddy status*         - Check Caddy Web Server running or not </hr>
