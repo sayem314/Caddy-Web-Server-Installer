@@ -43,3 +43,7 @@ Once done, you can use below command:
 > *caddy help*           - Parameters guide </hr>
 
 > *caddy version*        - Check Script/Caddy/PHP5-fpm version info </hr>
+
+### Contribute?
+
+Contributions are always welcome - if you have any code to contribute, simply fork this and submit a pull request! Otherwise, if you find any bugs or issues, please open an issue!
