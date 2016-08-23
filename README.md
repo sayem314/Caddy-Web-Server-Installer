@@ -50,5 +50,5 @@ Contributions are always welcome - if you have any code to contribute, simply fo
 
 ### Donations
 
-If you want to show your appreciation, you can donate via Bitcoin. Thanks!
+If you want to show your appreciation, you can donate via Bitcoin. Thanks!</br>
 16xPekxvRoCiG12iFG1SNUW1tSuPfxxNoV
