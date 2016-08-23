@@ -1,3 +1,15 @@
+v4.0 (23 Aug 2016)
+First stable release
+Added reload feature using USR1 signal
+Added reload feature for systemd
+Added pre-prompt
+Fixed system issue
+Fixed some delete issue
+
+v3.9 beta (13 Aug 2016)
+Fixed Ubuntu 16.x bugs
+Added sed install command
+
 v3.8 beta (11 Aug 2016)
 Added systemd service system
 Change php setup style
