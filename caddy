@@ -11,7 +11,8 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.0 (23 Aug 2016)"
+cwsiv="v4.1 (28 Aug 2016)"
+bashname=$(basename $BASH_SOURCE)
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
 	pids="`cat /var/run/caddy/caddy.pid`"
@@ -32,23 +33,23 @@ about () {
 
 howto () {
 	echo "  Welcome!"
-	echo "  run $(tput setaf 3)caddy help $(tput sgr0) for help"
+	echo "  run $(tput setaf 3)$bashname help $(tput sgr0) for help"
 	echo ""
 }
 
 prms () {
 	echo ""
-	echo "  caddy start          - Start $caddyname"
-	echo "  caddy stop           - Stop/Shutdown $caddyname"
-	echo "  caddy reload         - Reload $caddyname"
-	echo "  caddy restart        - Restart $caddyname"
-	echo "  caddy status         - Check $caddyname running or not"
-	echo "  caddy install        - Install $caddyname on fresh OS"
-	echo "  caddy edit           - Edit Caddyfile using the default editor" 
-	echo "  caddy service        - Make $caddyname a service (upstart/systemd)"
-	echo "  caddy update         - Update $caddyname"
-	echo "  caddy delete         - Uninstall Caddy and data."
-	echo "  caddy about          - About Caddy Web Server Installer"
+	echo "  $bashname start          - Start $caddyname"
+	echo "  $bashname stop           - Stop/Shutdown $caddyname"
+	echo "  $bashname reload         - Reload $caddyname"
+	echo "  $bashname restart        - Restart $caddyname"
+	echo "  $bashname status         - Check $caddyname running or not"
+	echo "  $bashname install        - Install $caddyname on fresh OS"
+	echo "  $bashname edit           - Edit Caddyfile using the default editor" 
+	echo "  $bashname service        - Make $caddyname a service (upstart/systemd)"
+	echo "  $bashname update         - Update $caddyname"
+	echo "  $bashname delete         - Uninstall Caddy and data."
+	echo "  $bashname about          - About Caddy Web Server Installer"
 	echo ""
 }
 
@@ -66,7 +67,7 @@ startcaddy () {
 		else
 			echo -n "  Starting $caddyname..."
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=/var/run/caddy/caddy.pid &
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		fi
 		restartphpfpm;
 		echo ""
@@ -90,7 +91,7 @@ stopcaddy () {
 		else
 			echo -n "  Shutting down $caddyname..."
 			kill $pids
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		fi
 		echo ""
 	fi
@@ -100,7 +101,7 @@ reloadcaddy () {
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
-		echo "  run $(tput setaf 3)caddy start$(tput sgr0) to start Caddy"
+		echo "  run $(tput setaf 3)$bashname start$(tput sgr0) to start Caddy"
 		echo ""
 	else
 		echo ""
@@ -110,7 +111,7 @@ reloadcaddy () {
 			echo -n "  Reloading $caddyname..."
 			kill -USR1 $pids
 			sleep 2
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			echo "  Refresh your browser at least 3 times to take affect"
 		fi
 		echo ""
@@ -121,7 +122,7 @@ caddystatus () {
 	if [[ ! -e $caddypath/caddy ]]; then
 	echo ""
 	echo "  Caddy is not installed."
-	echo "  run $(tput setaf 3)caddy install$(tput sgr0) to install $caddyname"
+	echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname"
 	echo ""
 	exit
 	fi
@@ -196,7 +197,7 @@ installcaddy () {
 	# Installing Caddy
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
 	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# Creating folders
 	echo ""
@@ -206,7 +207,7 @@ installcaddy () {
 	# Extract Caddy on created folder
 	echo -n "  Extracting $caddyname to $caddypath..."
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
-	echo " $(tput setaf 2)DONE$(tput sgr0)"
+	echo " $(tput setaf 2)[DONE]$(tput sgr0)"
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
 	echo ""
 	installphp;
@@ -218,12 +219,12 @@ installcaddy () {
 
 	# Port setup
 	APT_GET_CMD="/usr/bin/apt-get"
-	echo -n "  Binding port..."
+	echo -n "  Binding port using setcap..."
 	if [[ ! -z $APT_GET_CMD ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
 	fi
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 }
 
 installphp () {
@@ -253,12 +254,12 @@ installphp () {
 			# Install PHP
 			if [[ ! -z $YUM_CMD ]]; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
-				echo "  $(tput setaf 2)DONE$(tput sgr0)"
+				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
  			elif [[ ! -z $APT_GET_CMD ]]; then
 				apt-get update -y &>/dev/null && apt-get install sed $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
-				echo "  $(tput setaf 2)DONE$(tput sgr0)"
+				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
    			else
-				echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+				echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  			fi
 			fixphpfpm;
 		;;
@@ -280,36 +281,32 @@ fixphpfpm () {
 
 	# Detect php5-fpm or php-fpm
 	#Ubuntu
-	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	echo -n "  Fixing php..."
+	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
 	sed -i 's/group = .*/group = caddy/g' $ubuntuphp5fpm
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
-	echo -n "  Fixing php..."
 	sed -i 's/user = .*/user = caddy/g' $centosphpfpm
 	sed -i 's/group = .*/group = caddy/g' $centosphpfpm
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
-	echo -n "  Fixing php..."
 	sed -i 's/user = .*/user = caddy/g' $centosphpfpm2
 	sed -i 's/group = .*/group = caddy/g' $centosphpfpm2
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
-	echo -n "  Fixing php..."
 	sed -i 's/user = .*/user = caddy/g' $phpfpm7
 	sed -i 's/group = .*/group = caddy/g' $phpfpm7
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	
 	else
-	echo -n "  Fixing php..."
-	echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+	echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 	echo "  php not found!"
 	echo ""
 	fi
@@ -323,21 +320,17 @@ restartphpfpm () {
 
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
-	echo -n "  Restarting php5-fpm..."
-	service php5-fpm restart
+	service php5-fpm restart &>/dev/null
 
 	# CentOS
 	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
-	echo -n "  Restarting php5-fpm..."
-	service php-fpm restart
+	service php-fpm restart &>/dev/null
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
-	echo -n "  Restarting php7.0-fpm..."
-	/etc/init.d/php7.0-fpm reload
+	/etc/init.d/php7.0-fpm reload &>/dev/null
 	
 	fi
-	echo ""
 }
 
 caddyfile () {
@@ -378,7 +371,7 @@ caddyfile () {
 	echo ""
 	echo "  Enter your email for automated ssl"
 	read -p "  Email: " domainmail
-	until [[ "$domainmail" == *@* || "$domainmail" == off ]]; do
+	until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
 		echo ""
 		echo "  Invalid email"
 		read -p "  Email: " domainmail
@@ -429,7 +422,7 @@ You should <font color="#D03C3C">replace this file</font>
 
 	echo ""
 	echo "  Done. Caddy has been installed :)"
-	echo "  Run $(tput setaf 3)caddy start$(tput sgr0) to start $caddyname"
+	echo "  Run $(tput setaf 3)$bashname start$(tput sgr0) to start $caddyname"
 	echo ""
 
 }
@@ -477,12 +470,12 @@ updatecaddy () {
 	nocert="--no-check-certificate"
 
 	# Updating Caddy
-	caddyserverversion=`$caddypath/caddy -version | awk '{print}'`
+	caddyserv=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
-	echo "  Found $caddyserverversion"
+	echo "  Found $caddyserv"
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
 	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	sleep 0.1
 
 	# Delete Caddy folder
@@ -495,11 +488,12 @@ updatecaddy () {
 	# Extract Caddy on created folder
 	echo -n "  Extracting $caddyname to $caddypath"
 	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
+	caddyserv=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
-	echo "  Updated to $caddyserverversion"
+	echo "  Updated to $caddyserv"
 	echo ""
 }
 
@@ -540,12 +534,12 @@ EOF
   		APT_GET_CMD="/usr/bin/apt-get"
 		if [[ ! -z $YUM_CMD ]]; then
 			chkconfig caddy.sh on
-			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
  		elif [[ ! -z $APT_GET_CMD ]]; then
- 			echo "  $(tput setaf 2)DONE$(tput sgr0)"
+ 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
    		else
-			echo "  $(tput setaf 1)FAILED$(tput sgr0)"
+			echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  		fi
 	fi
 }
@@ -558,9 +552,11 @@ deletecaddy () {
 		case $option in
 			[yY][eE][sS]|[yY])
 			stopcaddy;
+			killall caddy
 			init=`cat /proc/1/comm`
 			if [ "$init" == 'init' ]; then
 				rm -f /etc/init/caddy.conf &>/dev/null
+				update-rc.d -f caddy.sh remove
 			elif [ "$init" == 'systemd' ]; then
 				systemctl disable caddy &>/dev/null
 				rm -f /etc/systemd/system/caddy.service &>/dev/null
@@ -574,7 +570,7 @@ deletecaddy () {
 			exit
 			;;
 			[nN][oO]|[nN]) exit;;
-			*) echo ""; echo "  Incorrect input, try again! ";;
+			*) echo ""; echo "  Incorrect input, exiting! "; exit;;
 		esac
 		else
 		echo ""
@@ -593,7 +589,7 @@ deletecaddydata () {
 			echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		;;
 		*)
-          echo "  Removing caddywww (data)... $(tput setaf 5)Skipped$(tput sgr0)"
+          echo "  Removing caddywww (data)... $(tput setaf 5)[Skipped]$(tput sgr0)"
           ;;
 		esac
 }
