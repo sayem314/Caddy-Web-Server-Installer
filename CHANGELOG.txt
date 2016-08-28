@@ -1,3 +1,9 @@
+v4.1 (28 Aug 2016)
+Some changes to improve
+Fixed showing wrong version after update
+Fixed to detect correct email
+Corrected not showing accurate script name
+
 v4.0 (23 Aug 2016)
 First stable release
 Added reload feature using USR1 signal
