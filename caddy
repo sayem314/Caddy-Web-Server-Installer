@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.1 (28 Aug 2016)"
+cwsiv="v4.2 (03 Oct 2016)"
 bashname=$(basename $BASH_SOURCE)
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
@@ -24,7 +24,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \               $cwsiv                 / "
+	echo "  \                  $cwsiv                               / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -110,9 +110,12 @@ reloadcaddy () {
 		else
 			echo -n "  Reloading $caddyname..."
 			kill -USR1 $pids
-			sleep 2
+			sleep 1
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+			sleep 1
+			echo "  To restart, use $(tput setaf 6)$bashname restart$(tput sgr0)"
 			echo "  Refresh your browser at least 3 times to take affect"
+			sleep 1
 		fi
 		echo ""
 	fi
@@ -146,7 +149,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
-		echo "  System free RAM $(free -t -h | egrep Mem | awk '{print $4}')B"
+		echo "  System available RAM $(free -h | grep - | awk '{print $4}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
 	fi
@@ -272,13 +275,15 @@ installphp () {
 	fi
 }
 
-fixphpfpm () {
-	nocert="--no-check-certificate"
+phpvalue () {
 	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
 	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
 	centosphpfpm2="/etc/php-fpm.d/www.conf"
 	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+}
 
+fixphpfpm () {
+	phpvalue;
 	# Detect php5-fpm or php-fpm
 	#Ubuntu
 	echo -n "  Fixing php..."
@@ -313,11 +318,7 @@ fixphpfpm () {
 }
 
 restartphpfpm () {
-	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
-	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
-	centosphpfpm2="/etc/php-fpm.d/www.conf"
-	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
-
+	phpvalue;
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	service php5-fpm restart &>/dev/null
@@ -329,17 +330,11 @@ restartphpfpm () {
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	/etc/init.d/php7.0-fpm reload &>/dev/null
-	
 	fi
 }
 
 caddyfile () {
-	# Detect php
-	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
-	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
-	centosphpfpm2="/etc/php-fpm.d/www.conf"
-	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
-
+	phpvalue;
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	phpsock="`cat $ubuntuphp5fpm | grep "listen = *" | cut -c 10-`"
@@ -604,41 +599,46 @@ versioninfo () {
 	echo ""
 }
 
+# Edit Caddyfile using nano
 editcaddyfile (){
-	editor $caddyfile
+	if [[ ! -z /usr/bin/nano ]]; then
+		nano $caddyfile
+   	else
+		editor $caddyfile
+ 	fi
 }
 
 # See how we were called.
 case $1 in
-	'-start'|'start' )
+	'-start'|'start'|'startcaddy' )
 		startcaddy;;
-	'-stop'|'stop' )
+	'-stop'|'stop'|'stopcaddy' )
 		stopcaddy;;
-	'-reload'|'reload' )
+	'-reload'|'reload'|'reloadcaddy' )
 		reloadcaddy;;
 	'-restart'|'restart' )
 		stopcaddy; sleep 2; startcaddy;;
-	'-status'|'status' )
+	'-status'|'status'|'caddystatus' )
 		caddystatus;;
 	'-install'|'install' )
-		amiroot; installcaddy; caddyfile;;
-	'-update'|'update' )
+		amiroot; caddyfile;;
+	'-update'|'update'|'updatecaddy' )
 		amiroot; updatecaddy; caddyfile;;
-	'-fixphp'|'fixphp' )
+	'-fixphp'|'fixphp'|'fixphpfpm' )
 		amiroot; fixphpfpm;;
 	'-installphp'|'installphp' )
 		amiroot; installphp;;
-	'-edit'|'edit' )
+	'-edit'|'edit'|'editcaddyfile' )
 		amiroot; editcaddyfile;;
-	'-service'|'service' )
+	'-service'|'service'|'makeservice' )
 		amiroot; makeservice;;
-	'-del'|'delete'|'-rm' )
+	'-del'|'delete'|'-rm'|'deletecaddy' )
 		amiroot; deletecaddy;;
 	'-about'|'about' )
 		about;;
 	'-h'|'help' )
 		prms;;
-	'-v'|'version'|'-version' )
+	'-v'|'version'|'-version'|'versioninfo' )
 		versioninfo;;
 	*)
 		caddystatus; howto;;
