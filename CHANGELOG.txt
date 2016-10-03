@@ -1,3 +1,13 @@
+v4.3 (03 Oct 2016)
+Fixed an line on about section
+Replaced a function to support php7 on Ubuntu 16 or later
+
+v4.2 (03 Oct 2016)
+Added/changed som echo line
+Added phpvalue function to reduce line
+Added call function to call via function name
+Changed free memory type to available
+
 v4.1 (28 Aug 2016)
 Some changes to improve
 Fixed showing wrong version after update
