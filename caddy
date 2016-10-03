@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.2 (03 Oct 2016)"
+cwsiv="v4.3 (03 Oct 2016)"
 bashname=$(basename $BASH_SOURCE)
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
@@ -24,7 +24,7 @@ about () {
 	echo ""
 	echo "  ========================================================= "
 	echo "  \             Caddy Web Server Installer                / "
-	echo "  \                  $cwsiv                               / "
+	echo "  \                  $cwsiv                   / "
 	echo "  \             Created by Sayem Chowdhury                / "
 	echo "  \             Caddy Web: Caddyserver.com                / "
 	echo "  ========================================================= "
@@ -242,13 +242,11 @@ installphp () {
 			YUM_CMD=$(which yum)
   			APT_GET_CMD="/usr/bin/apt-get"
 			if [[ ! -z $APT_GET_CMD ]]; then
-				CODENAME=`cat /etc/*-release | grep "VERSION="`
-				CODENAME=${CODENAME##*\(}
-				CODENAME=${CODENAME%%\)*}
+				CODENAME=`cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"'`
 			fi
 
 			#Setup PHP
-			if [[ "$CODENAME" == "Xenial Xerus" || "$CODENAME" == "Yakkety Yak" ]]; then
+			if [[ $CODENAME -gt 15 ]]; then
 				PHP="php7.0"
 			else
 				PHP="php5"
