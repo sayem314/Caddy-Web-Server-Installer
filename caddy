@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.3 (03 Oct 2016)"
+cwsiv="v4.4 (21 Feb 2017)"
 bashname=$(basename $BASH_SOURCE)
 
 if [[ -e "/var/run/caddy/caddy.pid" ]]; then
@@ -619,7 +619,7 @@ case $1 in
 	'-status'|'status'|'caddystatus' )
 		caddystatus;;
 	'-install'|'install' )
-		amiroot; caddyfile;;
+		amiroot; installcaddy; caddyfile;;
 	'-update'|'update'|'updatecaddy' )
 		amiroot; updatecaddy; caddyfile;;
 	'-fixphp'|'fixphp'|'fixphpfpm' )
