@@ -2,7 +2,7 @@
 
 
 Download **caddy.sh** and run **bash caddy.sh**<br>
-####Or
+#### Or
 <code>wget https://git.io/vra5C -O - -o /dev/null|bash</code>
 
 This will download and install caddy and create the necessary files.<br>
@@ -51,4 +51,4 @@ Contributions are always welcome - if you have any code to contribute, simply fo
 ### Donations
 
 If you want to show your appreciation, you can donate via Bitcoin. Thanks!</br>
-<code>16xPekxvRoCiG12iFG1SNUW1tSuPfxxNoV</code>
+<code>1GN7M2W4eAXTLDCeskwsgqJB9gFA3gLqPB</code>
