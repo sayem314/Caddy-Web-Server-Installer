@@ -11,14 +11,8 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.4 (21 Feb 2017)"
+cwsiv="v4.5 (20 Mar 2017)"
 bashname=$(basename $BASH_SOURCE)
-
-if [[ -e "/var/run/caddy/caddy.pid" ]]; then
-	pids="`cat /var/run/caddy/caddy.pid`"
-else
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
-fi
 
 about () {
 	echo ""
@@ -61,16 +55,18 @@ startcaddy () {
 		chown $caddyuser $caddypid
 	fi
 	if [ -z "$pids" ] ; then
-		echo ""
+		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy start
 		else
-			echo -n "  Starting $caddyname..."
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=/var/run/caddy/caddy.pid &
-			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		fi
+		sleep 1
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
+		sleep 1
 		restartphpfpm;
-		echo ""
+		caddystatus;
 	else
 		echo ""
 		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pids (PID)"
@@ -85,19 +81,23 @@ stopcaddy () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		echo ""
+		secs="`ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
+		echo -n "  Shutting down $caddyname..."
+		# Wait if Caddy uptime is less than 5 seconds
+		if [[ $secs -lt 5 ]]; then
+			sleep 4
+		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy stop
 		else
-			echo -n "  Shutting down $caddyname..."
 			kill $pids
-			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		fi
-		echo ""
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	fi
 }
 
 reloadcaddy () {
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
@@ -105,18 +105,17 @@ reloadcaddy () {
 		echo ""
 	else
 		echo ""
+		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy reload
 		else
-			echo -n "  Reloading $caddyname..."
 			kill -USR1 $pids
-			sleep 1
-			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-			sleep 1
-			echo "  To restart, use $(tput setaf 6)$bashname restart$(tput sgr0)"
-			echo "  Refresh your browser at least 3 times to take affect"
-			sleep 1
 		fi
+		sleep 2
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		echo ""
+		echo "  To restart, use $(tput setaf 6)$bashname restart$(tput sgr0)"
+		echo "  Refresh your browser at least 3 times to take affect"
 		echo ""
 	fi
 }
@@ -129,6 +128,7 @@ caddystatus () {
 	echo ""
 	exit
 	fi
+	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	# Detect Caddy process
 	if [ -z "$pids" ] ; then
 		echo ""
@@ -149,7 +149,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
-		echo "  System available RAM $(free -h | grep - | awk '{print $4}')B"
+		echo "  System available RAM $(free -h | grep Mem: | awk '{print $4}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
 	fi
@@ -228,6 +228,7 @@ installcaddy () {
 	fi
 	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	makeservice;
 }
 
 installphp () {
@@ -491,6 +492,9 @@ updatecaddy () {
 }
 
 makeservice () {
+if [[ -e /etc/systemd/system/caddy.service || -e /etc/init.d/caddy.sh ]]; then
+	echo "  Service already exists! Skipped."
+else
 	nocert="--no-check-certificate"
 	init=`cat /proc/1/comm`
 	echo -n "  Creating service..."
@@ -501,23 +505,26 @@ makeservice () {
 		cat <<EOF > /etc/systemd/system/caddy.service
 [Unit]
 Description=Caddy HTTP/2 web server
+Documentation=https://caddyserver.com/docs
 After=network.target
 
 [Service]
 User=$caddyuser
-Group=$caddyuser
-Type=simple
+StartLimitInterval=86400
+StartLimitBurst=5
+LimitNOFILE=16535
 ExecStart=$caddypath/caddy -conf=$caddyfile -quiet=true -pidfile=/var/run/caddy/caddy.pid
 ExecReload=/bin/kill -USR1 $MAIN$MAINPID
 ExecStop=/bin/kill $MAIN$MAINPID
 PIDFile=/var/run/caddy/caddy.pid
 
 [Install]
-WantedBy=multi-user.target"
+WantedBy=multi-user.target
 EOF
-	chmod 0644 /etc/systemd/system/caddy.service
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
-	systemctl enable caddy
+		chmod 0644 /etc/systemd/system/caddy.service
+		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		systemctl daemon-reload
+		systemctl enable caddy
 	else
 		# Download
 		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
@@ -535,6 +542,7 @@ EOF
 			echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  		fi
 	fi
+fi
 }
 
 deletecaddy () {
