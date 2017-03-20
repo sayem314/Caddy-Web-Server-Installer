@@ -1,3 +1,11 @@
+v4.5 (20 Mar 2017)
+Fixed and improved service for systemd
+Fixed not showing system available RAM on status
+Fixed detecting issue if caddy is not running
+Fixed some typo
+Improved overall codes
+Added service by default now
+
 v4.4 (21 Feb 2017)
 Fixed install issue introduced on v4.2
 
