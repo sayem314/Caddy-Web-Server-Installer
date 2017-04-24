@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.6 (24 Apr 2017)"
+cwsiv="v4.7 (24 Apr 2017)"
 bashname=$(basename $BASH_SOURCE)
 
 about () {
@@ -289,6 +289,7 @@ fixphpfpm () {
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
 	sed -i 's/group = .*/group = caddy/g' $ubuntuphp5fpm
+	sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $ubuntuphp5fpm
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS
