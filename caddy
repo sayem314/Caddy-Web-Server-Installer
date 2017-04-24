@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.5 (20 Mar 2017)"
+cwsiv="v4.6 (24 Apr 2017)"
 bashname=$(basename $BASH_SOURCE)
 
 about () {
@@ -174,20 +174,20 @@ installcaddy () {
 
 	# Detect architecture
 	if [ -n "$(uname -m | grep 64)" ]; then
-		cpubits="arch=amd64"
-		cpubitsname="for (64bit)..."
+		cpubits="amd64"
+		cpubitsname="(64bit)..."
 	elif [ -n "$(uname -m | grep 86)" ]; then
-		cpubits="arch=386"
-		cpubitsname="for (32bit)..."
+		cpubits="386"
+		cpubitsname="(32bit)..."
 	elif [ -n "$(uname -m | grep armv5)" ]; then
-		cpubits="arch=arm&arm=5"
-		cpubitsname="for (ARM 5)..."
+		cpubits="arm5"
+		cpubitsname="(ARM 5)..."
 	elif [ -n "$(uname -m | grep armv6l)" ]; then
-		cpubits="arch=arm&arm=6"
-		cpubitsname="for (ARM 6)..."
+		cpubits="arm6"
+		cpubitsname="(ARM 6)..."
 	elif [ -n "$(uname -m | grep armv7l)" ]; then
-		cpubits="arch=arm&arm=7"
-		cpubitsname="for (ARM 7)..."
+		cpubits="arm7"
+		cpubitsname="(ARM 7)..."
 	else
 		echo ""
 		echo "  unsupported or unknown architecture"
@@ -198,8 +198,8 @@ installcaddy () {
 	nocert="--no-check-certificate"
 
 	# Installing Caddy
-	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
-	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
+	echo -n "  Downloading $caddyname for $cpubitsname" #Caddy linux
+	wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# Creating folders
@@ -553,11 +553,11 @@ deletecaddy () {
 		case $option in
 			[yY][eE][sS]|[yY])
 			stopcaddy;
-			killall caddy
+			killall caddy &>/dev/null
 			init=`cat /proc/1/comm`
 			if [ "$init" == 'init' ]; then
-				rm -f /etc/init/caddy.conf &>/dev/null
 				update-rc.d -f caddy.sh remove
+				rm -f /etc/init/caddy.conf &>/dev/null
 			elif [ "$init" == 'systemd' ]; then
 				systemctl disable caddy &>/dev/null
 				rm -f /etc/systemd/system/caddy.service &>/dev/null
