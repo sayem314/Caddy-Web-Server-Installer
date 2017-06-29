@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.7 (24 Apr 2017)"
+cwsiv="v4.8 (29 Jun 2017)"
 bashname=$(basename $BASH_SOURCE)
 
 about () {
@@ -469,7 +469,7 @@ updatecaddy () {
 	echo ""
 	echo "  Found $caddyserv"
 	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
-	wget -q $nocert "https://caddyserver.com/download/build?os=linux&$cpubits&features=" -O "caddy_linux_custom.tar.gz"
+	wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	sleep 0.1
 
