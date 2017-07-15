@@ -11,8 +11,12 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v4.8 (29 Jun 2017)"
+cwsiv="v4.9 (15 Jul 2017)"
 bashname=$(basename $BASH_SOURCE)
+pids=`pgrep -nf $caddypath/caddy`
+
+# /opt is our working directory
+cd /opt
 
 about () {
 	echo ""
@@ -48,12 +52,15 @@ prms () {
 }
 
 startcaddy () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
+	# Check if process id folder does not exists
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
 		mkdir -p $caddypid
 		chown $caddyuser $caddypid
 	fi
+
+	# Detect if running or start
+	pids=`pgrep -nf $caddypath/caddy`
 	if [ -z "$pids" ] ; then
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
@@ -63,9 +70,10 @@ startcaddy () {
 		fi
 		sleep 1
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-		pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
+
 		sleep 1
 		restartphpfpm;
+		pids=`pgrep -nf $caddypath/caddy`
 		caddystatus;
 	else
 		echo ""
@@ -75,7 +83,7 @@ startcaddy () {
 }
 
 stopcaddy () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
+	pids=`pgrep -nf $caddypath/caddy`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
@@ -92,12 +100,12 @@ stopcaddy () {
 		else
 			kill $pids
 		fi
+		sleep 0.1
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	fi
 }
 
 reloadcaddy () {
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
@@ -128,7 +136,6 @@ caddystatus () {
 	echo ""
 	exit
 	fi
-	pids=`ps aux | grep $caddypath/caddy | grep -v grep | awk '{ print $2 }'`
 	# Detect Caddy process
 	if [ -z "$pids" ] ; then
 		echo ""
@@ -209,16 +216,21 @@ installcaddy () {
 	
 	# Extract Caddy on created folder
 	echo -n "  Extracting $caddyname to $caddypath..."
-	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
+	tar xzf caddy_linux_custom.tar.gz -C $caddypath # Extracting Caddy
 	echo " $(tput setaf 2)[DONE]$(tput sgr0)"
-	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
+	rm -rf caddy_linux_custom.tar.gz # Deleting Caddy archive
 	echo ""
 	installphp;
 
 	# Creating non-root user
-	useradd -r -d $caddypath -s /bin/false $caddyuser
-	chown $caddyuser $caddypath
-	chown $caddyuser $caddylog
+	if id -u ghost >/dev/null 2>&1; then
+		echo "  User 'caddy' already exists! Skipped."
+	else
+		echo "  Creating user 'caddy'"
+		useradd -r -d $caddypath -s /bin/false $caddyuser
+    fi
+	chown -R $caddyuser $caddypath
+	chown -R $caddyuser $caddylog
 
 	# Port setup
 	APT_GET_CMD="/usr/bin/apt-get"
@@ -433,8 +445,8 @@ updatecaddy () {
 		exit;
 	fi
 
-	# Stop process
-	if [ -e "/var/run/caddy/caddy.pid" ] ; then
+	# Stop current process if found
+	if [ ! -z "$pids" ] ; then
 		echo ""
 		echo "  Found Caddy is running"
 		stopcaddy;
@@ -442,50 +454,56 @@ updatecaddy () {
 
 	# Detect architecture
 	if [ -n "$(uname -m | grep 64)" ]; then
-		cpubits="arch=amd64"
-		cpubitsname="for (64bit)..."
+		cpubits="amd64"
+		cpubitsname="(64bit)..."
 	elif [ -n "$(uname -m | grep 86)" ]; then
-		cpubits="arch=386"
-		cpubitsname="for (32bit)..."
+		cpubits="386"
+		cpubitsname="(32bit)..."
 	elif [ -n "$(uname -m | grep armv5)" ]; then
-		cpubits="arch=arm&arm=5"
-		cpubitsname="for (ARM 5)..."
+		cpubits="arm5"
+		cpubitsname="(ARM 5)..."
 	elif [ -n "$(uname -m | grep armv6l)" ]; then
-		cpubits="arch=arm&arm=6"
-		cpubitsname="for (ARM 6)..."
+		cpubits="arm6"
+		cpubitsname="(ARM 6)..."
 	elif [ -n "$(uname -m | grep armv7l)" ]; then
-		cpubits="arch=arm&arm=7"
-		cpubitsname="for (ARM 7)..."
+		cpubits="arm7"
+		cpubitsname="(ARM 7)..."
 	else
-		echo "unsupported or unknown architecture"
+		echo ""
+		echo "  unsupported or unknown architecture"
 		echo ""
 		exit;
 	fi
 
 	nocert="--no-check-certificate"
 
-	# Updating Caddy
+	# Downloading Caddy
 	caddyserv=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
 	echo "  Found $caddyserv"
-	echo -n "  Downloading $caddyname $cpubitsname" #Caddy linux
+	echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	sleep 0.1
 
 	# Delete Caddy folder
 	echo -n "  Removing Caddy directory $caddypath"
-	sleep 0.3
+	sleep 0.2
 	rm -rf $caddypath/*
 	echo "  $(tput setaf 2)DONE$(tput sgr0)"
 	sleep 0.1
 
 	# Extract Caddy on created folder
-	echo -n "  Extracting $caddyname to $caddypath"
-	tar xzf caddy_linux_custom.tar.gz -C $caddypath #Extracting Caddy
-	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	echo -n "  Extracting $caddyname to $caddypath..."
+	tar xzf caddy_linux_custom.tar.gz -C $caddypath # Extracting Caddy
+	echo " $(tput setaf 2)[DONE]$(tput sgr0)"
+
+	# Granting owner access and required permission
+	chown -R $caddyuser $caddypath
 	setcap cap_net_bind_service=+ep $caddypath/caddy
-	rm -rf caddy_linux_custom.tar.gz #Deleting Caddy archive
+
+	# Removing caddy archive and printing info
+	rm -rf caddy_linux_custom.tar.gz # Deleting Caddy archive
 	caddyserv=`$caddypath/caddy -version | awk '{print}'`
 	echo ""
 	echo "  Updated to $caddyserv"
@@ -507,7 +525,8 @@ else
 [Unit]
 Description=Caddy HTTP/2 web server
 Documentation=https://caddyserver.com/docs
-After=network.target
+After=network-online.target
+Requires=network-online.target
 
 [Service]
 User=$caddyuser
@@ -606,7 +625,7 @@ versioninfo () {
 	echo ""
 }
 
-# Edit Caddyfile using nano
+# Edit Caddyfile using nano or default editor
 editcaddyfile (){
 	if [[ ! -z /usr/bin/nano ]]; then
 		nano $caddyfile
