@@ -1,5 +1,10 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.1 (17 Jul 2017)
+-Fixed and improved removing issue
+
+-Enhanced displaying some output
+
 #### v5.0 (17 Jul 2017)
 -Updated parameters docs
 
