@@ -1,9 +1,25 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.0 (17 Jul 2017)
+-Updated parameters docs
+
+-Cleaned overall code
+
+-Fixed detecting/creating user
+
+-Fixed printing php version
+
+-Improved caddy download
+
+-Improved update function
+
 #### v4.9 (15 Jul 2017)
 -minor update
+
 -minor issue fixed
+
 -update issue fixed
+
 -improved systemd service
 
 #### v4.8 (29 Jun 2017)
