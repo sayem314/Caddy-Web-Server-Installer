@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.0 (17 Jul 2017)"
+cwsiv="v5.1 (17 Jul 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=`pgrep -nf $caddypath/caddy`
 
@@ -286,9 +286,9 @@ updatecaddy () {
 	CADDYV=`wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g'`
 	if [[ ! $CADDYV -gt $caddyserv ]]; then
 		echo "  Looks like you already have latest version  installed."
-		sleep 0.5
-		echo; echo "  Abort.";
-		sleep 0.5
+		sleep 0.1
+		echo "  Abort.";
+		sleep 0.1
 		exit;
 	fi
 
@@ -339,7 +339,7 @@ updatecaddy () {
 	echo -n "  Removing current $caddyname from $caddypath"
 	sleep 0.2
 	rm -rf $caddypath/*
-	echo "  $(tput setaf 2)DONE$(tput sgr0)"
+	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	sleep 0.1
 
 	# Extract Caddy to appropriate folder
@@ -502,9 +502,9 @@ fastcgi / $phpsock php
 }" >> $caddyfile
 
 		echo ""
-		echo "  Caddyfile created"
+		echo "  $caddyfile created"
 		else
-		echo "  Caddyfile found. Skip... "
+		echo "  $caddyfile found. Skip... "
 	fi
 
 	# Check if caddywww exist
@@ -578,6 +578,7 @@ WantedBy=multi-user.target
 EOF
 		chmod 0644 /etc/systemd/system/caddy.service
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
+		echo ""
 		systemctl daemon-reload
 		systemctl enable caddy
 	else
@@ -621,30 +622,31 @@ deletecaddy () {
 			fi
 			rm -rf $caddypath &>/dev/null # deleting caddy web server folder
 			rm -f $caddyfile &>/dev/null # deleting caddyfile
-			userdel $caddyuser # delete caddy user
 			echo "  $caddyname has been deleted."
 			echo ""
 			deletecaddydata;
-			exit
 			;;
 			[nN][oO]|[nN]) exit;;
 			*) echo ""; echo "  Incorrect input, exiting! "; exit;;
 		esac
 		else
 			echo ""
-			echo "  Looks like Caddy is not installed"
+			echo "  Looks like Caddy is not  installed!"
 	fi
 	echo ""
 }
 
 deletecaddydata () {
 		read -r -p "  Would you also like to delete $caddywww (data)? [y/N]: " option
+		echo ""
 		case $option in
 		[yY][eE][sS]|[yY])
 			echo -n "  Deleting $caddywww (data)..."
 			sleep 2
 			rm -rf $caddywww # deleting caddy html folder
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+			userdel $caddyuser # delete caddy user
+			echo "  Caddy user '$caddyuser' has been deleted too."
 		;;
 		*)
           echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
