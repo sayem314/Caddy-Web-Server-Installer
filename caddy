@@ -609,7 +609,6 @@ deletecaddy () {
 		[yY][eE][sS]|[yY])
 			stopcaddy;
 			sleep 0.5
-			killall caddy &>/dev/null
 			sleep 3
 			init=`cat /proc/1/comm`
 			if [ "$init" == 'init' ]; then
