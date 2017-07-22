@@ -2,6 +2,7 @@
 
 #### v5.2 (22 Jul 2017)
 -minor improvement
+-fixed terminated issue while removing
 
 #### v5.1 (17 Jul 2017)
 -Fixed and improved removing issue
