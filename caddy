@@ -11,11 +11,11 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.1 (17 Jul 2017)"
+cwsiv="v5.2 (22 Jul 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=`pgrep -nf $caddypath/caddy`
 
-# /opt is our working directory
+# working directory
 cd /opt
 
 about () {
@@ -41,12 +41,10 @@ prms () {
 	echo "  $bashname stop           - Stop/Shutdown $caddyname."
 	echo "  $bashname reload         - Reload $caddyname."
 	echo "  $bashname restart        - Restart $caddyname."
-	echo "  $bashname status         - Check $caddyname is running or not"
-	echo "                           - or just run '$bashname'."
+	echo "  $bashname status         - Check $caddyname is running or not"; echo "                      - or just run '$bashname'."
 	echo "  $bashname install        - Install $caddyname on fresh OS."
 	echo "  $bashname edit           - Edit Caddyfile using nano or default editor." 
-	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."
-	echo "                           - Not required because we install service on install."
+	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."; echo "                      - Not required because we install service on install."
 	echo "  $bashname update         - Update $caddyname."
 	echo "  $bashname delete         - Uninstall $caddyname and data."
 	echo "                           - We would prompt you if you want to keep data."
@@ -510,7 +508,6 @@ fastcgi / $phpsock php
 	# Check if caddywww exist
 	if [[ ! -e $caddywww ]]; then
 		mkdir -p $caddywww
-		chown $caddyuser $caddywww
 	fi
 
 	# Generate example html
@@ -537,6 +534,8 @@ You should <font color="#D03C3C">replace this file</font>
 		echo "  PHP-info file created"
 		echo "  $caddywww/info.php"
 	fi
+
+	chown -R $caddyuser $caddywww
 
 	echo ""
 	echo "  Done. Caddy has been installed :)"
@@ -607,7 +606,7 @@ deletecaddy () {
 		echo "  Are you sure you want to uninstall Caddy web server? [y/N]"
 		read -p "  Select an option: " option
 		case $option in
-			[yY][eE][sS]|[yY])
+		[yY][eE][sS]|[yY])
 			stopcaddy;
 			sleep 0.5
 			killall caddy &>/dev/null
@@ -626,12 +625,15 @@ deletecaddy () {
 			echo ""
 			deletecaddydata;
 			;;
-			[nN][oO]|[nN]) exit;;
-			*) echo ""; echo "  Incorrect input, exiting! "; exit;;
+		[nN][oO]|[nN])
+			echo "  Abort."
+			exit;
+			;;
+		*) echo ""; echo "  Incorrect input, exiting! "; exit;;
 		esac
 		else
 			echo ""
-			echo "  Looks like Caddy is not  installed!"
+			echo "  Looks like Caddy is not installed!"
 	fi
 	echo ""
 }
@@ -647,7 +649,7 @@ deletecaddydata () {
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			userdel $caddyuser # delete caddy user
 			echo "  Caddy user '$caddyuser' has been deleted too."
-		;;
+			;;
 		*)
           echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
           ;;
@@ -660,7 +662,7 @@ versioninfo () {
 		caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
 		echo "  $caddyname $caddyserverversion"
 	else
-		echo "  Caddy is not installed."
+		echo "  $caddyname is not installed."
 	fi
 	echo "  Caddy Web Server Installer - $cwsiv"
 	if [[ -e /usr/bin/php ]]; then
@@ -680,35 +682,35 @@ editcaddyfile (){
 
 # See how we were called.
 case $1 in
-	'-start'|'start'|'startcaddy' )
+	'-start'|'--start'|'start'|'startcaddy' )
 		startcaddy;;
-	'-stop'|'stop'|'stopcaddy' )
+	'-stop'|'--stop'|'stop'|'stopcaddy' )
 		stopcaddy;;
-	'-reload'|'reload'|'reloadcaddy' )
+	'-reload'|'--reload'|'reload'|'reloadcaddy' )
 		reloadcaddy;;
-	'-restart'|'restart' )
+	'-restart'|'--restart'|'restart' )
 		stopcaddy; sleep 2; startcaddy;;
-	'-status'|'status'|'caddystatus' )
+	'-status'|'--status'|'status'|'caddystatus' )
 		caddystatus;;
-	'-install'|'install' )
+	'-install'|'--install'|'install' )
 		amiroot; installcaddy; caddyfile;;
-	'-update'|'update'|'updatecaddy' )
+	'-update'|'--update'|'update'|'updatecaddy' )
 		amiroot; updatecaddy; caddyfile;;
-	'-fixphp'|'fixphp'|'fixphpfpm' )
+	'-fixphp'|'--fixphp'|'fixphp'|'fixphpfpm' )
 		amiroot; fixphpfpm;;
-	'-installphp'|'installphp' )
+	'-installphp'|'--installphp'|'installphp' )
 		amiroot; installphp;;
 	'-edit'|'edit'|'editcaddyfile' )
 		amiroot; editcaddyfile;;
-	'-service'|'service'|'makeservice' )
+	'-service'|'--service'|'service'|'makeservice' )
 		amiroot; makeservice;;
-	'-del'|'delete'|'-rm'|'deletecaddy' )
+	'-del'|'delete'|'--delete'|'-rm'|'deletecaddy' )
 		amiroot; deletecaddy;;
-	'-about'|'about' )
+	'-about'|'about'|'--about' )
 		about;;
-	'-h'|'help' )
+	'-h'|'help'|'-help'|'--help' )
 		prms;;
-	'-v'|'version'|'-version'|'versioninfo' )
+	'-v'|'version'|'-version'|'--version'|'versioninfo' )
 		versioninfo;;
 	*)
 		caddystatus; howto;;
