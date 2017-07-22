@@ -1,5 +1,8 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.2 (22 Jul 2017)
+-minor improvement
+
 #### v5.1 (17 Jul 2017)
 -Fixed and improved removing issue
 
