@@ -1,7 +1,13 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.3 (23 Jul 2017)
+-Fixed php installation issue on debian 9
+
+-Fixed other minor issue
+
 #### v5.2 (22 Jul 2017)
 -minor improvement
+
 -fixed terminated issue while removing
 
 #### v5.1 (17 Jul 2017)
