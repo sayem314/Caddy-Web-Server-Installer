@@ -14,11 +14,13 @@ Ubuntu - 14.04 (Trusty Tahr), 14.10 (Utopic Unicorn), 15.04 (Vivid Vervet), 16.0
 Debian - 7.11 (Wheezy), 8.5 (Jessie), Debian 9 (Stretch)<br>
 CentOS - 6.8 and 7.2<br>
 
-Example command to install with plugins: `caddy install http.cache,http.filemanager,http.ipfilter,http.ratelimit`
+Example command to install with plugins:
 
-It does detect your system automatically either 32bit or 64bit.
+`caddy install http.cache,http.filemanager,http.ipfilter,http.ratelimit`
 
-Once done, you can use below command:
+_This script detect your system automatically either 32bit or 64bit._
+
+###### Once done, you can use below command:
 
 > *caddy start*          - Start Caddy Web Server </hr>
 
