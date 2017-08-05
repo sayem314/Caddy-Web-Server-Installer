@@ -11,9 +11,12 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.3 (23 Jul 2017)"
+cwsiv="v5.4 (05 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
-pids=`pgrep -nf $caddypath/caddy`
+pids=$(pgrep -nf $caddypath/caddy)
+
+# exit on error!
+set -e
 
 # working directory
 cd /opt
@@ -46,8 +49,7 @@ prms () {
 	echo "  $bashname edit           - Edit Caddyfile using nano or default editor." 
 	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."; echo "                         Not required because we install service on install."
 	echo "  $bashname update         - Update $caddyname."
-	echo "  $bashname delete         - Uninstall $caddyname and data."
-	echo "                           - We would prompt you if you want to keep data."
+	echo "  $bashname delete         - Uninstall $caddyname and data."; echo "                         We would prompt you if you want to keep data."
 	echo "  $bashname version        - Print version information."
 	echo "  $bashname about          - About $caddyname Installer."
 	echo ""
@@ -62,7 +64,7 @@ startcaddy () {
 	fi
 
 	# Detect if running or start
-	pids=`pgrep -nf $caddypath/caddy`
+	pids=$(pgrep -nf $caddypath/caddy)
 	if [ -z "$pids" ] ; then
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
@@ -75,7 +77,7 @@ startcaddy () {
 
 		sleep 1
 		restartphpfpm;
-		pids=`pgrep -nf $caddypath/caddy`; caddystatus;
+		pids=$(pgrep -nf $caddypath/caddy); caddystatus;
 	else
 		echo ""
 		echo "  $caddyname is already $(tput setaf 2)running$(tput sgr0) on: $pids (PID)"
@@ -84,13 +86,13 @@ startcaddy () {
 }
 
 stopcaddy () {
-	pids=`pgrep -nf $caddypath/caddy`
+	pids=$(pgrep -nf $caddypath/caddy)
 	if [ -z "$pids" ] ; then
 		echo ""
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		secs="`ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
+		secs=$(ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
 		echo -n "  Shutting down $caddyname..."
 		# Wait if Caddy uptime is less than 5 seconds
 		if [[ $secs -lt 5 ]]; then
@@ -159,16 +161,16 @@ caddystatus () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		caddymemusage=`ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}'`
-		secs="`ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}'`"
+		caddymemusage=$(ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}')
+		secs=$(ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
 		if [[ $secs -lt 120 ]]; then
 			caddyuptime="$secs seconds"
 		elif [[ $secs -lt 3600 ]]; then
-			caddyuptime="`printf '%d minutes %d seconds\n' $(($secs%3600/60)) $(($secs%60))`"
+			caddyuptime=$(printf '%d minutes %d seconds\n' $(($secs%3600/60)) $(($secs%60)))
 		elif [[ $secs -lt 86400 ]]; then
-			caddyuptime="`printf '%d hrs %d min %d sec\n' $(($secs/3600)) $(($secs%3600/60)) $(($secs%60))`"
+			caddyuptime=$(printf '%d hrs %d min %d sec\n' $(($secs/3600)) $(($secs%3600/60)) $(($secs%60)))
 		else
-			caddyuptime="`echo $((secs/86400))" days, "$(date -d "1970-01-01 + $secs seconds" "+%H hrs %M min %S sec")`"
+			caddyuptime=$(echo $((secs/86400))" days, "$(date -d "1970-01-01 + $secs seconds" "+%H hrs %M min %S sec"))
 		fi
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
@@ -214,6 +216,11 @@ installcaddy () {
 	else
 		echo; echo "  unsupported or unknown architecture";
 		echo; exit;
+	fi
+
+	# Check if plugins should be installed!
+	if [[ ! $plugin == "" ]]; then
+		cpubits="$cpubits?plugins=$plugin"
 	fi
 
 	# Download Caddy binary, caddy is protable.
@@ -280,8 +287,8 @@ updatecaddy () {
 	echo;
 
 	# Check if there is newer version available
-	caddyserv=`$caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g'`
-	CADDYV=`wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g'`
+	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g')
+	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g')
 	if [[ ! $CADDYV -gt $caddyserv ]]; then
 		echo "  Looks like you already have latest version  installed."
 		sleep 0.1
@@ -318,7 +325,7 @@ updatecaddy () {
 	fi
 
 	# Downloading Caddy
-	caddyserv=`$caddypath/caddy -version | awk '{print}'`
+	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	nocert="--no-check-certificate"
 	echo ""
 	echo "  Found $caddyserv"
@@ -359,7 +366,7 @@ updatecaddy () {
 
 	# Removing caddy archive and printing info
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
-	caddyserv=`$caddypath/caddy -version | awk '{print}'`
+	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	echo; echo "  Updated to $caddyserv"; echo;
 }
 
@@ -372,11 +379,10 @@ installphp () {
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
-			YUM_CMD=$(which yum)
   			APT_GET_CMD="/usr/bin/apt-get"
 			if [[ ! -z $APT_GET_CMD ]]; then
-				CODENAME=`cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"'`
-				DEBIAN9=`lsb_release -i | awk 'NF{ print $NF }'`
+				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
+				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
 			fi
 
 			#Setup PHP
@@ -388,13 +394,14 @@ installphp () {
 
 			# Debian 9 PHP7 detection
 			if [[ $DEBIAN9 == Debian ]]; then
-				DEBIAN9V=`cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"'`
+				DEBIAN9V=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				if [[ $DEBIAN9V -gt 8 ]]; then
 					PHP="php7.0"
 				fi
 			fi
 
 			# Install PHP
+			YUM_CMD=$(which yum)
 			if [[ ! -z $YUM_CMD ]]; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -427,7 +434,7 @@ phpvalue () {
 fixphpfpm () {
 	phpvalue;
 	# Detect php5-fpm or php-fpm
-	echo -n "  Fixing php..."
+	echo -n "  Fixing php sock issue..."
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 		sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
@@ -464,20 +471,20 @@ caddyfile () {
 	phpvalue;
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
-	phpsock="`cat $ubuntuphp5fpm | grep "listen = *" | cut -c 10-`"
+	phpsock=$(cat $ubuntuphp5fpm | grep "listen = *" | cut -c 10-)
 	
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
-	phpsock="`cat $centosphpfpm | grep "listen = *" | cut -c 10-`"
+	phpsock=$(cat $centosphpfpm | grep "listen = *" | cut -c 10-)
 
 	# CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
-	phpsock="`cat $centosphpfpm2 | grep "listen = *" | cut -c 10-`"
+	phpsock=$(cat $centosphpfpm2 | grep "listen = *" | cut -c 10-)
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $phpfpm7
-	phpsock="`cat $phpfpm7 | grep "listen = *" | cut -c 10-`"
+	phpsock=$(cat $phpfpm7 | grep "listen = *" | cut -c 10-)
 	
 	else
 	phpsock="127.0.0.1:9000"
@@ -506,7 +513,8 @@ gzip
 log $caddylog/access.log
 errors $caddylog/error.log
 fastcgi / $phpsock php
-}" >> $caddyfile
+}
+" >> $caddyfile
 
 		echo ""
 		echo "  $caddyfile created"
@@ -558,7 +566,7 @@ if [[ -e /etc/systemd/system/caddy.service || -e /etc/init.d/caddy.sh ]]; then
 	echo "  Service already exists! Skipped."
 else
 	nocert="--no-check-certificate"
-	init=`cat /proc/1/comm`
+	init=$(cat /proc/1/comm)
 	echo -n "  Creating service..."
 	if [ "$init" == 'systemd' ]; then
 		MAIN="$"
@@ -619,7 +627,7 @@ deletecaddy () {
 			stopcaddy;
 			sleep 0.5
 			sleep 3
-			init=`cat /proc/1/comm`
+			init=$(cat /proc/1/comm)
 			if [ "$init" == 'init' ]; then
 				update-rc.d -f caddy.sh remove
 				rm -f /etc/init/caddy.conf &>/dev/null
@@ -704,7 +712,7 @@ case $1 in
 	'-status'|'--status'|'status'|'caddystatus' )
 		caddystatus;;
 	'-install'|'--install'|'install' )
-		amiroot; installcaddy; caddyfile;;
+		amiroot; plugin="$2"; installcaddy; caddyfile;;
 	'-update'|'--update'|'update'|'updatecaddy' )
 		amiroot; updatecaddy; caddyfile;;
 	'-fixphp'|'--fixphp'|'fixphp'|'fixphpfpm' )
@@ -721,7 +729,7 @@ case $1 in
 		about;;
 	'-h'|'help'|'-help'|'--help' )
 		prms;;
-	'-v'|'version'|'-version'|'--version'|'versioninfo' )
+	'-v'|'version'|'-version'|'--version'|'versioninfo'|'-V' )
 		versioninfo;;
 	*)
 		caddystatus; howto;;
