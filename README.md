@@ -4,6 +4,8 @@ Download **caddy.sh** and run **bash caddy.sh**<br>
 
 See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation)
 
+_This script detect your system automatically either 32bit or 64bit._
+
 ### Tested Operating System
 
 Ubuntu - 14.04 (Trusty Tahr), 14.10 (Utopic Unicorn), 15.04 (Vivid Vervet), 16.04.1 (Xenial Xerus)<br>
@@ -13,8 +15,6 @@ CentOS - 6.8 and 7.2<br>
 #### Example command to install with plugins:
 
 `caddy install http.cache,http.filemanager,http.ipfilter,http.ratelimit`
-
-_This script detect your system automatically either 32bit or 64bit._
 
 See list of available commands [here.](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Command-List)
 
