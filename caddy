@@ -324,6 +324,11 @@ updatecaddy () {
 		echo; exit;
 	fi
 
+	# Check if plugins should be installed!
+	if [[ ! $plugin == "" ]]; then
+		cpubits="$cpubits?plugins=$plugin"
+	fi
+
 	# Downloading Caddy
 	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	nocert="--no-check-certificate"
@@ -714,7 +719,7 @@ case $1 in
 	'-install'|'--install'|'install' )
 		amiroot; plugin="$2"; installcaddy; caddyfile;;
 	'-update'|'--update'|'update'|'updatecaddy' )
-		amiroot; updatecaddy; caddyfile;;
+		amiroot; plugin="$2"; updatecaddy; caddyfile;;
 	'-fixphp'|'--fixphp'|'fixphp'|'fixphpfpm' )
 		amiroot; fixphpfpm;;
 	'-installphp'|'--installphp'|'installphp' )
