@@ -11,8 +11,10 @@ Caddy will then run as non-root user "caddy".
 ### Tested Operating System
 
 Ubuntu - 14.04 (Trusty Tahr), 14.10 (Utopic Unicorn), 15.04 (Vivid Vervet), 16.04.1 (Xenial Xerus)<br>
-Debian - 7.11 (Wheezy), 8.5 (Jessie)<br>
+Debian - 7.11 (Wheezy), 8.5 (Jessie), Debian 9 (Stretch)<br>
 CentOS - 6.8 and 7.2<br>
+
+Example command to install with plugins: `caddy install http.cache,http.filemanager,http.ipfilter,http.ratelimit`
 
 It does detect your system automatically either 32bit or 64bit.
 
