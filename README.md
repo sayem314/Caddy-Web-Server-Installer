@@ -1,12 +1,8 @@
 # Caddy-Web-Server-Installer
 
-
 Download **caddy.sh** and run **bash caddy.sh**<br>
-#### Or
-<code>wget https://git.io/vra5C -O - -o /dev/null|bash</code>
 
-This will download and install caddy and create the necessary files.<br>
-Caddy will then run as non-root user "caddy".
+See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation)
 
 ### Tested Operating System
 
@@ -14,39 +10,13 @@ Ubuntu - 14.04 (Trusty Tahr), 14.10 (Utopic Unicorn), 15.04 (Vivid Vervet), 16.0
 Debian - 7.11 (Wheezy), 8.5 (Jessie), Debian 9 (Stretch)<br>
 CentOS - 6.8 and 7.2<br>
 
-Example command to install with plugins:
+#### Example command to install with plugins:
 
 `caddy install http.cache,http.filemanager,http.ipfilter,http.ratelimit`
 
 _This script detect your system automatically either 32bit or 64bit._
 
-###### Once done, you can use below command:
-
-> *caddy start*          - Start Caddy Web Server </hr>
-
-> *caddy stop*           - Stop/Shutdown Caddy Web Server </hr>
-
-> *caddy reload*         - Reload Caddy Web Server </hr>
-
-> *caddy restart*        - Restart Caddy Web Server</code </hr>
-
-> *caddy status*         - Check Caddy Web Server running or not </hr>
-
-> *caddy install*        - Install Caddy Web Server on fresh OS </hr>
-
-> *caddy edit*           - Edit Caddyfile using the default editor
-
-> *caddy service*        - Make Caddy Web Server a service (upstart/systemd) </hr>
-
-> *caddy update*         - Update Caddy Web Server</hr>
-
-> *caddy delete*         - Uninstall Caddy and data. </hr>
-
-> *caddy about*          - About Caddy Web Server Installer </hr>
-
-> *caddy help*           - Parameters guide </hr>
-
-> *caddy version*        - Check Script/Caddy/PHP5-fpm version info </hr>
+See list of available commands [here.](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Command-List)
 
 ### Contribute?
 
