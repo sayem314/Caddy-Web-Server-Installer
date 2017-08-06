@@ -216,7 +216,7 @@ installcaddy () {
 		echo; exit;
 	fi
 
-	# Download Caddy binary and plugin if defined, caddy is protable.
+	# Download Caddy binary and plugin if defined, caddy is portable.
 	nocert="--no-check-certificate"
 	if [[ ! $plugin == "" ]]; then
 		cpubits="$cpubits?plugins=$plugin"
@@ -370,7 +370,7 @@ updatecaddy () {
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 
 	# Removing caddy archive and printing info
-	echo $(($(date --utc --date "$1" +%s)/86400)) > $caddypath/update.check
+	echo $(date +%s) > $caddypath/update.check
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	echo; echo "  Updated to $caddyserv"; echo;
@@ -760,7 +760,7 @@ esac
 
 # check updates every 72hrs
 if [[ ! -e $caddypath/update.check ]]; then
-	echo $(date +%s) > $caddypath/update.check
+	
 elif [[ -e $caddypath/update.check  ]]; then
 	currentdays="$(date +%s)"
 	lastcheckdays=$(cat $caddypath/update.check)
