@@ -1,5 +1,8 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.6 (06 Aug 2017)
+- some minor fix
+
 #### v5.5 (06 Aug 2017)
 - installing on debian fixed
 - added support for auto update check
