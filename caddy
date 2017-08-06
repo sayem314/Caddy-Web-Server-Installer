@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.5 (06 Aug 2017)"
+cwsiv="v5.6 (06 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -250,14 +250,20 @@ installcaddy () {
 	echo " $(tput setaf 2)[DONE]$(tput sgr0)"
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	echo ""
-	installphp;
+
+	# Skip php installation on arch-linux
+	# Support for arch-linux will be implemented later
+	if [[ ! -e /usr/bin/pacman ]]; then
+		installphp;
+	fi
 
 	# Creating non-root user
 	if id -u $caddyuser >/dev/null 2>&1; then
 		echo "  User '$caddyuser' already exists! Skipped."
 	else
-		echo "  Creating user '$caddyuser'"
-		useradd -r -d $caddypath -s /bin/false $caddyuser
+		echo -n "  Creating user '$caddyuser'..."
+		useradd -r -d $caddypath -s /bin/false $caddyuser &> /dev/null
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
     fi
 	chown -R $caddyuser $caddypath
 	chown -R $caddyuser $caddylog
@@ -646,6 +652,7 @@ deletecaddy () {
 			echo "  $caddyname has been deleted."
 			echo ""
 			deletecaddydata;
+			exit
 			;;
 		[nN][oO]|[nN])
 			echo "  Abort."
