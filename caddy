@@ -15,8 +15,13 @@ cwsiv="v5.6 (06 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
+# Command  paths
+YUM_CMD=$(which yum)
+APT_GET_CMD=$(which apt-get)
+NANO_CMD=$(which nano)
+
 # working directory
-cd /opt
+cd /opt || return
 
 about () {
 	echo ""
@@ -269,7 +274,6 @@ installcaddy () {
 	chown -R $caddyuser $caddylog
 
 	# Port setup
-	APT_GET_CMD="/usr/bin/apt-get"
 	echo -n "  Binding port using setcap..."
 	if [[ ! -z $APT_GET_CMD ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
@@ -391,7 +395,6 @@ installphp () {
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
-  			APT_GET_CMD="/usr/bin/apt-get"
 			if [[ ! -z $APT_GET_CMD ]]; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
@@ -409,7 +412,6 @@ installphp () {
 			fi
 
 			# Install PHP
-			YUM_CMD=$(which yum)
 			if [[ ! -z $YUM_CMD ]]; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -537,17 +539,18 @@ fastcgi / $phpsock php
 
 	# Generate example html
 	if [[ ! -e $caddywww/index.html ]]; then
-		echo "<TITLE>Caddy Default Page</TITLE>
-
+		cat <<EOT >>  $caddywww/index.html
+<title>Caddy Default Page</title>
 <h1><font color="green">It works!</font></h1>
-
+</br>
 <h3><font color="grey">This is the default welcome page used to test the correct operation of the Caddy web server after installation via Caddy Web Server Installer.</font></h3>
-
+</br>
 <h3><font color="grey">If you can read this page, it means that the Caddy web server installed at this site is working properly.<br>
 You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
-<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
+<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>
+EOT
 		echo "  index.html created"
 	else
 		echo "  index.html found. Skip ... "
@@ -610,8 +613,6 @@ EOF
 		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
 		chmod +x /etc/init.d/caddy.sh
 		# Enable
-		YUM_CMD=$(which yum)
-  		APT_GET_CMD="/usr/bin/apt-get"
 		if [[ ! -z $YUM_CMD ]]; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -687,21 +688,21 @@ deletecaddydata () {
 versioninfo () {
 	echo ""
 	if [[ -e $caddypath/caddy ]]; then
-		caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
+		caddyserverversion=$($caddypath/caddy -version | awk '{print $2}')
 		echo "  $caddyname $caddyserverversion"
 	else
 		echo "  $caddyname is not installed."
 	fi
 	echo "  Caddy Web Server Installer - $cwsiv"
 	if [[ -e /usr/bin/php ]]; then
-		echo "  `php -v | grep cli`"
+		echo "  $(php -v | grep cli)"
 	fi
 	echo ""
 }
 
 # Edit Caddyfile using nano or default editor
 editcaddyfile (){
-	if [[ ! -z /usr/bin/nano ]]; then
+	if [[ ! -z $NANO_CMD ]]; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
    	else
