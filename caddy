@@ -760,7 +760,7 @@ esac
 
 # check updates every 72hrs
 if [[ ! -e $caddypath/update.check ]]; then
-	
+	echo $(date +%s) > $caddypath/update.check
 elif [[ -e $caddypath/update.check  ]]; then
 	currentdays="$(date +%s)"
 	lastcheckdays=$(cat $caddypath/update.check)
