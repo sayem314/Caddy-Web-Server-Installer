@@ -389,21 +389,17 @@ installphp () {
 			if [[ ! -z $APT_GET_CMD ]]; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
+				if [[ $DEBIAN9 == Debian ]]; then
+				DEBIAN9V=$(lsb_release -r | awk 'NF{ print $NF }' | cut -f1 -d'.')
+				CODENAME="0"
+				fi
 			fi
 
 			#Setup PHP
-			if [[ $CODENAME -gt 15 ]]; then
+			if [[ $CODENAME -gt 15 ]] || [[ $DEBIAN9V -gt 8 ]]; then
 				PHP="php7.0"
 			else
 				PHP="php5"
-			fi
-
-			# Debian 9 PHP7 detection
-			if [[ $DEBIAN9 == Debian ]]; then
-				DEBIAN9V=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
-				if [[ $DEBIAN9V -gt 8 ]]; then
-					PHP="php7.0"
-				fi
 			fi
 
 			# Install PHP
