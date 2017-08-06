@@ -11,12 +11,9 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.4 (05 Aug 2017)"
+cwsiv="v5.5 (06 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
-
-# exit on error!
-set -e
 
 # working directory
 cd /opt
@@ -184,6 +181,7 @@ caddystatus () {
 amiroot () {
 	if [[ "$EUID" -ne 0 ]]; then
 		echo "  Sorry, you need to run this as root"
+		echo "  Try running with command 'sudo'"
 		exit
 	fi
 }
@@ -218,14 +216,14 @@ installcaddy () {
 		echo; exit;
 	fi
 
-	# Check if plugins should be installed!
+	# Download Caddy binary and plugin if defined, caddy is protable.
+	nocert="--no-check-certificate"
 	if [[ ! $plugin == "" ]]; then
 		cpubits="$cpubits?plugins=$plugin"
+		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
+	else
+		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	fi
-
-	# Download Caddy binary, caddy is protable.
-	nocert="--no-check-certificate"
-	echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"; then
 		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 		echo ""
@@ -287,8 +285,8 @@ updatecaddy () {
 	echo;
 
 	# Check if there is newer version available
-	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g')
-	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g')
+	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	if [[ ! $CADDYV -gt $caddyserv ]]; then
 		echo "  Looks like you already have latest version  installed."
 		sleep 0.1
@@ -324,17 +322,19 @@ updatecaddy () {
 		echo; exit;
 	fi
 
-	# Check if plugins should be installed!
-	if [[ ! $plugin == "" ]]; then
-		cpubits="$cpubits?plugins=$plugin"
-	fi
+
 
 	# Downloading Caddy
 	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	nocert="--no-check-certificate"
 	echo ""
 	echo "  Found $caddyserv"
-	echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
+	if [[ ! $plugin == "" ]]; then
+		cpubits="$cpubits?plugins=$plugin"
+		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
+	else
+		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
+	fi
 	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"; then
 		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 		echo ""
@@ -370,6 +370,7 @@ updatecaddy () {
 	setcap cap_net_bind_service=+ep $caddypath/caddy
 
 	# Removing caddy archive and printing info
+	echo $(($(date --utc --date "$1" +%s)/86400)) > $caddypath/update.check
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	caddyserv=$($caddypath/caddy -version | awk '{print}')
 	echo; echo "  Updated to $caddyserv"; echo;
@@ -698,10 +699,27 @@ versioninfo () {
 # Edit Caddyfile using nano or default editor
 editcaddyfile (){
 	if [[ ! -z /usr/bin/nano ]]; then
+		echo " opening $caddyfile using nano"
 		nano $caddyfile
    	else
 		editor $caddyfile
  	fi
+}
+
+checkforupdate () {
+	# Detetcting Caddy installed or not
+	if [[ -e "$caddypath/caddy" ]]; then
+		# Check if there is newer version available
+		caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+		CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
+		if [[ $CADDYV -gt $caddyserv ]]; then
+			echo ""
+			echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
+			echo "  There is an update available of $caddyname"
+			echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
+			echo ""
+		fi
+	fi
 }
 
 # See how we were called.
@@ -739,6 +757,18 @@ case $1 in
 	*)
 		caddystatus; howto;;
 esac
+
+# check updates every 72hrs
+if [[ ! -e $caddypath/update.check ]]; then
+	echo $(date +%s) > $caddypath/update.check
+elif [[ -e $caddypath/update.check  ]]; then
+	currentdays="$(date +%s)"
+	lastcheckdays=$(cat $caddypath/update.check)
+	updatedays="$(expr $currentdays - $lastcheckdays)"
+	if [[ $updatedays -gt 259200 ]]; then
+		checkforupdate;
+	fi
+fi
 
 # exit now!
 exit 0
