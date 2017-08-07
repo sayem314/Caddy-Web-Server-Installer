@@ -495,21 +495,27 @@ caddyfile () {
 		echo "  Seperated by comma"
 		read -p "  Domain name: " domainname
 		echo ""
-		echo "  Enter your email for automated ssl"
-		read -p "  Email: " domainmail
-		until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
+		# Check if gonna run locally
+		if [[ $domainname == "localhost" || $domainname == "localhost:*" || $domainname == "127.0.0*" || $domainname == "192.168*" ]]; then
+			echo "  SSL is disabled on non-production server."
+		else
+			echo "  Enter your email for automated ssl"
+			read -p "  Email: " domainmail
+			until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
 			echo ""
 			echo "  Invalid email"
+			echo "  Type $(tput setaf 3)off$(tput sgr0) if you don't want https"
 			read -p "  Email: " domainmail
 		done
+		fi
 
 		echo "$domainname {
-tls $domainmail
-root $caddywww
-gzip
-log $caddylog/access.log
-errors $caddylog/error.log
-fastcgi / $phpsock php
+	root $caddywww
+	gzip
+	tls $domainmail
+	log $caddylog/access.log
+	errors $caddylog/error.log
+	fastcgi / $phpsock php
 }
 " >> $caddyfile
 
