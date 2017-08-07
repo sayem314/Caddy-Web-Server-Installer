@@ -1,5 +1,9 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.8 (unknown)
+- Improved Caddyfile
+- Skip email prompt if running locally
+
 #### v5.7 (07 Aug 2017)
 - Improved overall code
 - Improved service detection
