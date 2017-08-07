@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.6 (06 Aug 2017)"
+cwsiv="v5.7 (07 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -65,7 +65,12 @@ startcaddy () {
 	if [ -z "$pids" ] ; then
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			service caddy start
+			# If service exist use service
+			if [[ -e /usr/sbin/service ]]; then
+				service caddy start
+			else
+				systemctl start caddy
+			fi
 		else
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=$caddypid/caddy.pid &
 		fi
@@ -96,7 +101,12 @@ stopcaddy () {
 			sleep 4
 		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			service caddy stop
+			# Most arch based linux don't have service
+			if [[ -e /usr/sbin/service ]]; then
+				service caddy stop
+			else
+				systemctl stop caddy
+			fi
 		else
 			kill $pids
 		fi
@@ -115,7 +125,11 @@ reloadcaddy () {
 		echo ""
 		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			service caddy reload
+			if [[ -e /usr/sbin/service ]]; then
+				service caddy reload
+			else
+				systemctl reload caddy
+			fi
 		else
 			kill -USR1 $pids
 		fi
@@ -137,7 +151,7 @@ restartphpfpm () {
 	# CentOS
 	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
 	service php-fpm restart &>/dev/null
-
+	
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	/etc/init.d/php7.0-fpm reload &>/dev/null
@@ -186,15 +200,7 @@ amiroot () {
 	fi
 }
 
-installcaddy () {
-	# Detetcting if Caddy is installed or not
-	echo ""
-	if [[ -e "$caddypath/caddy" ]]; then
-		echo "  $caddyname is already installed on"
-		echo "  $caddypath/caddy"
-		echo; exit;
-	fi
-
+getcaddy () {
 	# Detect architecture. We only support linux.
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="amd64"
@@ -216,14 +222,23 @@ installcaddy () {
 		echo; exit;
 	fi
 
-	# Download Caddy binary and plugin if defined, caddy is portable.
+	# Downloading Caddy
+	isupdate="$1"
 	nocert="--no-check-certificate"
+	if [[ $isupdate == "update" ]]; then
+		caddyserv=$($caddypath/caddy -version | awk '{print}')
+		echo ""; echo "  Found $caddyserv";
+	fi
+
+	# Check if plugin should be installed
 	if [[ ! $plugin == "" ]]; then
 		cpubits="$cpubits?plugins=$plugin"
 		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
 	else
 		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	fi
+
+	# Star downloading caddy now
 	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"; then
 		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 		echo ""
@@ -232,6 +247,19 @@ installcaddy () {
 		exit 1
 	fi
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+}
+
+installcaddy () {
+	# Detetcting if Caddy is installed or not
+	echo ""
+	if [[ -e "$caddypath/caddy" ]]; then
+		echo "  $caddyname is already installed on"
+		echo "  $caddypath/caddy"
+		echo; exit;
+	fi
+
+	# Download caddy
+	getcaddy;
 
 	# Creating folders
 	echo ""
@@ -294,7 +322,7 @@ updatecaddy () {
 	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	if [[ ! $CADDYV -gt $caddyserv ]]; then
-		echo "  Looks like you already have latest version  installed."
+		echo "  Looks like you already have latest version installed."
 		sleep 0.1
 		echo "  Abort.";
 		sleep 0.1
@@ -307,48 +335,8 @@ updatecaddy () {
 		stopcaddy;
 	fi
 
-	# Detect architecture
-	if [ -n "$(uname -m | grep 64)" ]; then
-		cpubits="amd64"
-		cpubitsname="(64bit)..."
-	elif [ -n "$(uname -m | grep 86)" ]; then
-		cpubits="386"
-		cpubitsname="(32bit)..."
-	elif [ -n "$(uname -m | grep armv5)" ]; then
-		cpubits="arm5"
-		cpubitsname="(ARM 5)..."
-	elif [ -n "$(uname -m | grep armv6l)" ]; then
-		cpubits="arm6"
-		cpubitsname="(ARM 6)..."
-	elif [ -n "$(uname -m | grep armv7l)" ]; then
-		cpubits="arm7"
-		cpubitsname="(ARM 7)..."
-	else
-		echo; echo "  unsupported or unknown architecture";
-		echo; exit;
-	fi
-
-
-
-	# Downloading Caddy
-	caddyserv=$($caddypath/caddy -version | awk '{print}')
-	nocert="--no-check-certificate"
-	echo ""
-	echo "  Found $caddyserv"
-	if [[ ! $plugin == "" ]]; then
-		cpubits="$cpubits?plugins=$plugin"
-		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
-	else
-		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
-	fi
-	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"; then
-		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
-		echo ""
-		echo "  Error: Cannot download Caddy binary!"
-		echo "  https://caddyserver.com/download/linux/$cpubits"
-		exit 1
-	fi
-	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	# Download caddy
+	getcaddy update;
 	sleep 0.1
 
 	# Delete Caddy folder
@@ -382,12 +370,12 @@ updatecaddy () {
 	echo; echo "  Updated to $caddyserv"; echo;
 }
 
+
 installphp () {
 	if [[ -e  "$caddypath" ]] ; then
 		read -r -p "  Are you gonna run php site? [y/N]: " -e -i y option
 		case $option in
 		[yY][eE][sS]|[yY])
-			# Installing required php files
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
@@ -395,13 +383,14 @@ installphp () {
 			if [[ ! -z $APT_GET_CMD ]]; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
+				# If debian 9 or above select php7
 				if [[ $DEBIAN9 == Debian ]]; then
-				DEBIAN9V=$(lsb_release -r | awk 'NF{ print $NF }' | cut -f1 -d'.')
-				CODENAME="0"
+					DEBIAN9V=$(lsb_release -r | awk 'NF{ print $NF }' | cut -f1 -d'.')
+					CODENAME="0"
 				fi
 			fi
 
-			#Setup PHP
+			# Setup PHP
 			if [[ $CODENAME -gt 15 ]] || [[ $DEBIAN9V -gt 8 ]]; then
 				PHP="php7.0"
 			else
@@ -635,16 +624,20 @@ deletecaddy () {
 			stopcaddy;
 			sleep 0.5
 			sleep 3
+			# Disable and remove startup script if exist
 			init=$(cat /proc/1/comm)
-			if [ "$init" == 'init' ]; then
-				update-rc.d -f caddy.sh remove
-				rm -f /etc/init/caddy.conf &>/dev/null
-			elif [ "$init" == 'systemd' ]; then
+			if [ "$init" == 'systemd' ]; then
 				systemctl disable caddy &>/dev/null
 				rm -f /etc/systemd/system/caddy.service &>/dev/null
+			elif [ "$init" == 'init' ]; then
+				update-rc.d -f caddy.sh remove
+				rm -f /etc/init/caddy.conf &>/dev/null
 			fi
-			rm -rf $caddypath &>/dev/null # deleting caddy web server folder
-			rm -f $caddyfile &>/dev/null # deleting caddyfile
+
+			# Remove Caddy web server folder and Caddyfile
+			# Usually on /opt/caddyserver and /etc/Caddyfile
+			rm -rf $caddypath &>/dev/null
+			rm -f $caddyfile &>/dev/null
 			echo "  $caddyname has been deleted."
 			echo ""
 			deletecaddydata;
@@ -687,14 +680,14 @@ deletecaddydata () {
 versioninfo () {
 	echo ""
 	if [[ -e $caddypath/caddy ]]; then
-		caddyserverversion=`$caddypath/caddy -version | awk '{print $2}'`
+		caddyserverversion=$($caddypath/caddy -version | awk '{print $2}')
 		echo "  $caddyname $caddyserverversion"
 	else
 		echo "  $caddyname is not installed."
 	fi
 	echo "  Caddy Web Server Installer - $cwsiv"
 	if [[ -e /usr/bin/php ]]; then
-		echo "  `php -v | grep cli`"
+		echo "  $(php -v | grep cli)"
 	fi
 	echo ""
 }
@@ -710,18 +703,18 @@ editcaddyfile (){
 }
 
 checkforupdate () {
-	# Detetcting Caddy installed or not
-	if [[ -e "$caddypath/caddy" ]]; then
-		# Check if there is newer version available
-		caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
-		CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-		if [[ $CADDYV -gt $caddyserv ]]; then
-			echo ""
-			echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
-			echo "  There is an update available of $caddyname"
-			echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
-			echo ""
-		fi
+	# Check if there is newer version available
+	# Currenly only check caddyserver not this script
+	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	if [[ $CADDYV -gt $caddyserv ]]; then
+		echo ""
+		echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
+		echo "  There is an update available of $caddyname"
+		echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
+		echo ""
+	else
+		echo $(date +%s) > $caddypath/update.check
 	fi
 }
 
@@ -762,14 +755,18 @@ case $1 in
 esac
 
 # check updates every 72hrs
-if [[ ! -e $caddypath/update.check ]]; then
-	echo $(date +%s) > $caddypath/update.check
-elif [[ -e $caddypath/update.check  ]]; then
-	currentdays="$(date +%s)"
-	lastcheckdays=$(cat $caddypath/update.check)
-	updatedays="$(expr $currentdays - $lastcheckdays)"
-	if [[ $updatedays -gt 259200 ]]; then
-		checkforupdate;
+if [[ -e "$caddypath/caddy" ]]; then
+	# Create update.check file if not exist
+	if [[ ! -e $caddypath/update.check ]]; then
+		echo $(date +%s) > $caddypath/update.check
+	elif [[ -e $caddypath/update.check  ]]; then
+		currentdays="$(date +%s)"
+		lastcheckdays=$(cat $caddypath/update.check)
+		updatedays="$(($currentdays - $lastcheckdays))"
+		# if more than 72hrs execute update check
+		if [[ $updatedays -gt 259200 ]]; then
+			checkforupdate;
+		fi
 	fi
 fi
 
