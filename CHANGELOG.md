@@ -1,12 +1,18 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.7 (07 Aug 2017)
+- Improved overall code
+- Improved service detection
+- Improved update check feature
+- Optimized code for downloading and updating
+
 #### v5.6 (06 Aug 2017)
-- some minor fix
+- Some minor fix
 
 #### v5.5 (06 Aug 2017)
-- installing on debian fixed
-- added support for auto update check
-- fixed octal base issue
+- Installing on debian fixed
+- Added support for auto update check
+- Fixed octal base issue
 
 #### v5.4 (05 Aug 2017)
 - Added support for plugins
@@ -17,8 +23,8 @@
 - Fixed other minor issue
 
 #### v5.2 (22 Jul 2017)
-- minor improvement
-- fixed terminated issue while removing
+- Minor improvement
+- Fixed terminated issue while removing
 
 #### v5.1 (17 Jul 2017)
 - Fixed and improved removing issue
@@ -33,10 +39,10 @@
 - Improved update function
 
 #### v4.9 (15 Jul 2017)
-- minor update
-- minor issue fixed
-- update issue fixed
-- improved systemd service
+- Minor update
+- Minor issue fixed
+- Update issue fixed
+- Improved systemd service
 
 #### v4.8 (29 Jun 2017)
 - update issue fixed 
