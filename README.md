@@ -1,10 +1,7 @@
-# Caddy-Web-Server-Installer
+This is a simple script to setup Caddy web server and maintain on Linux based OS
 
-Download **caddy.sh** and run **bash caddy.sh**<br>
-
-See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation)
-
-_This script detect your system automatically either 32bit or 64bit._
+See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation) for detailed instructions.
+Also checkout [wiki](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki)
 
 ### Tested Operating System
 
@@ -24,5 +21,12 @@ Contributions are always welcome - if you have any code to contribute, simply fo
 
 ### Donations
 
-If you want to show your appreciation, you can donate via Bitcoin. Thanks!</br>
-<code>1GN7M2W4eAXTLDCeskwsgqJB9gFA3gLqPB</code>
+If you want to show your appreciation, you can donate via Crypto. Thanks!
+
+BTC: <code>16YZHpUFVJSwAV9ZszHQa1XBnH8v53pCaU</code>
+
+LTC: <code>LfnBbkW1jsMzgG4Yo99EA4hTnt7pH69aG6</code>
+
+ETH: <code>0x38131a9Fc15fbE84FabEc3FA4BDf04cc4e939e2c</code>
+
+_**PS: This script/program does not come with any kind of warranty.**_
