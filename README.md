@@ -1,4 +1,4 @@
-##### This is a simple script to setup Caddy web server and maintain on Linux based OS
+#### This is a simple script to setup Caddy web server and maintain on Linux based OS
 
 See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation) for detailed instructions.
 Also checkout [wiki](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki)
@@ -29,4 +29,4 @@ LTC: <code>LfnBbkW1jsMzgG4Yo99EA4hTnt7pH69aG6</code>
 
 ETH: <code>0x38131a9Fc15fbE84FabEc3FA4BDf04cc4e939e2c</code>
 
-_**PS: This script/program does not come with any kind of warranty.**_
+_**PS:**_ This script/program does not come with any kind of warranty. You're very welcome to inspect it's content.
