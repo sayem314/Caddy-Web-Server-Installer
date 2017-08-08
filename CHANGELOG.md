@@ -5,7 +5,6 @@
 - Improved service detection
 - Improved update check feature
 - Optimized code for downloading and updating
-- Better apt/yum/pacman detection
 
 #### v5.6 (06 Aug 2017)
 - Some minor fix
