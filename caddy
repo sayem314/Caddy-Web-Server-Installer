@@ -43,6 +43,7 @@ prms () {
 	echo "  $bashname restart        - Restart $caddyname."
 	echo "  $bashname status         - Check $caddyname is running or not"; echo "                         or just run '$bashname'."
 	echo "  $bashname install        - Install $caddyname on fresh OS."
+	echo "  $bashname install-naked  - Install only $caddyname and no prompt."
 	echo "  $bashname edit           - Edit Caddyfile using nano or default editor." 
 	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."; echo "                         Not required because we install service on install."
 	echo "  $bashname update         - Update $caddyname."
@@ -279,10 +280,10 @@ installcaddy () {
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	echo ""
 
-	# Skip php installation on arch-linux
-	# Support for arch-linux will be implemented later
-	if [[ ! hash pacman 2>/dev/null ]]; then
-		installphp;
+	# Skip php installation on arch-linux and naked install
+	# Php installation support for arch-linux will be implemented later
+	if [[ ! $1 == naked ]]; then
+		hash pacman 2>/dev/null || installphp
 	fi
 
 	# Creating non-root user
@@ -298,17 +299,23 @@ installcaddy () {
 
 	# Port setup
 	echo -n "  Binding port using setcap..."
-	if [[ hash setcap 2>/dev/null ]]; then
+	if hash setcap 2>/dev/null; then
 		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-	elif [[ hash apt-get 2>/dev/null ]]; then
+	elif hash apt-get 2>/dev/null; then
 		apt-get install libcap2-bin -y &>/dev/null
 		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	else
 		echo "  echo "  [$(tput setaf 1)FAILED$(tput sgr0)]""
 	fi
-	makeservice;
+
+	# Show succes message on naked install
+	if [[ $1 == naked ]]; then
+		echo ""
+		echo "  Installed $caddyname to $caddypath"
+		echo ""
+	fi
 }
 
 updatecaddy () {
@@ -367,9 +374,7 @@ updatecaddy () {
     fi
 
 	# Port setup
-	if [[ hash setcap 2>/dev/null ]]; then
-		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-	fi
+	hash setcap 2>/dev/null && setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 
 	# Removing caddy archive and printing info
 	echo $(date +%s) > $caddypath/update.check
@@ -387,7 +392,7 @@ installphp () {
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
-			if [[ hash apt-get 2>/dev/null ]]; then
+			if hash apt-get 2>/dev/null; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
 				# If debian 9 or above select php7
@@ -405,12 +410,12 @@ installphp () {
 			fi
 
 			# Install PHP
-			if [[ hash yum 2>/dev/null ]]; then
+			if hash yum 2>/dev/null; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed 'php-fpm php-cli php-curl curl sudo'"
 				fixphpfpm;
- 			elif [[ hash apt-get 2>/dev/null ]]; then
+ 			elif hash apt-get 2>/dev/null; then
 				apt-get update -y &>/dev/null && apt-get install sed $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed '$PHP-fpm $PHP-cli $PHP-curl curl sudo'"
@@ -612,10 +617,10 @@ EOF
 		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
 		chmod +x /etc/init.d/caddy.sh
 		# Enable
-		if [[ hash yum 2>/dev/null ]]; then
+		if hash yum 2>/dev/null; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
- 		elif [[ hash apt-get 2>/dev/null ]]; then
+ 		elif hash apt-get 2>/dev/null; then
  			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
    		else
@@ -705,7 +710,7 @@ versioninfo () {
 
 # Edit Caddyfile using nano or default editor
 editcaddyfile (){
-	if [[ ! -z /usr/bin/nano ]]; then
+	if hash nano 2>/dev/null; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
    	else
@@ -742,7 +747,9 @@ case $1 in
 	'-status'|'--status'|'status'|'caddystatus' )
 		caddystatus;;
 	'-install'|'--install'|'install' )
-		amiroot; plugin="$2"; installcaddy; caddyfile;;
+		amiroot; plugin="$2"; installcaddy; makeservice; caddyfile;;
+	'-install-naked'|'--install-naked'|'install-naked' )
+		amiroot; plugin="$2"; installcaddy naked;;
 	'-update'|'--update'|'update'|'updatecaddy' )
 		amiroot; plugin="$2"; updatecaddy; caddyfile;;
 	'-fixphp'|'--fixphp'|'fixphp'|'fixphpfpm' )
