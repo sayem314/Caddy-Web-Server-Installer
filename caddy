@@ -281,7 +281,7 @@ installcaddy () {
 
 	# Skip php installation on arch-linux
 	# Support for arch-linux will be implemented later
-	if [[ ! -e /usr/bin/pacman ]]; then
+	if [[ ! hash pacman 2>/dev/null ]]; then
 		installphp;
 	fi
 
@@ -297,13 +297,17 @@ installcaddy () {
 	chown -R $caddyuser $caddylog
 
 	# Port setup
-	APT_GET_CMD="/usr/bin/apt-get"
 	echo -n "  Binding port using setcap..."
-	if [[ ! -z $APT_GET_CMD ]]; then
+	if [[ hash setcap 2>/dev/null ]]; then
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	elif [[ hash apt-get 2>/dev/null ]]; then
 		apt-get install libcap2-bin -y &>/dev/null
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	else
+		echo "  echo "  [$(tput setaf 1)FAILED$(tput sgr0)]""
 	fi
-	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	makeservice;
 }
 
@@ -361,7 +365,11 @@ updatecaddy () {
 	if id -u $caddyuser >/dev/null 2>&1; then
 		chown -R $caddyuser $caddypath
     fi
-	setcap cap_net_bind_service=+ep $caddypath/caddy
+
+	# Port setup
+	if [[ hash setcap 2>/dev/null ]]; then
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
+	fi
 
 	# Removing caddy archive and printing info
 	echo $(date +%s) > $caddypath/update.check
@@ -379,8 +387,7 @@ installphp () {
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
-  			APT_GET_CMD="/usr/bin/apt-get"
-			if [[ ! -z $APT_GET_CMD ]]; then
+			if [[ hash apt-get 2>/dev/null ]]; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
 				# If debian 9 or above select php7
@@ -398,19 +405,19 @@ installphp () {
 			fi
 
 			# Install PHP
-			YUM_CMD=$(which yum)
-			if [[ ! -z $YUM_CMD ]]; then
+			if [[ hash yum 2>/dev/null ]]; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed 'php-fpm php-cli php-curl curl sudo'"
- 			elif [[ ! -z $APT_GET_CMD ]]; then
+				fixphpfpm;
+ 			elif [[ hash apt-get 2>/dev/null ]]; then
 				apt-get update -y &>/dev/null && apt-get install sed $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed '$PHP-fpm $PHP-cli $PHP-curl curl sudo'"
+				fixphpfpm;
    			else
 				echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  			fi
-			fixphpfpm;
 		;;
 		*)
           echo "  PHP installation skipped."
@@ -605,12 +612,10 @@ EOF
 		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
 		chmod +x /etc/init.d/caddy.sh
 		# Enable
-		YUM_CMD=$(which yum)
-  		APT_GET_CMD="/usr/bin/apt-get"
-		if [[ ! -z $YUM_CMD ]]; then
+		if [[ hash yum 2>/dev/null ]]; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
- 		elif [[ ! -z $APT_GET_CMD ]]; then
+ 		elif [[ hash apt-get 2>/dev/null ]]; then
  			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
    		else
