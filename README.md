@@ -26,5 +26,3 @@ BTC: <code>16YZHpUFVJSwAV9ZszHQa1XBnH8v53pCaU</code>
 LTC: <code>LfnBbkW1jsMzgG4Yo99EA4hTnt7pH69aG6</code>
 
 ETH: <code>0x38131a9Fc15fbE84FabEc3FA4BDf04cc4e939e2c</code>
-
-> * This script/program does not come with any kind of warranty. You're very welcome to inspect it's content.
