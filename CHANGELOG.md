@@ -3,6 +3,7 @@
 #### v5.8 (unknown)
 - Improved Caddyfile
 - Skip email prompt if running locally
+- Better apt/yum/pacman detection
 
 #### v5.7 (07 Aug 2017)
 - Improved overall code
