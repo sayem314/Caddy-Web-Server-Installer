@@ -1,6 +1,7 @@
 ### This repo contain changelog of script for better maintaining
 
 #### v5.8 (unknown)
+- Added support for naked install
 - Improved Caddyfile
 - Skip email prompt if running locally
 - Better apt/yum/pacman detection
