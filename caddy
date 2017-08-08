@@ -205,19 +205,19 @@ getcaddy () {
 	# Detect architecture. We only support linux.
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="amd64"
-		cpubitsname="(64bit)..."
+		cpubitsname="64bit..."
 	elif [ -n "$(uname -m | grep 86)" ]; then
 		cpubits="386"
-		cpubitsname="(32bit)..."
+		cpubitsname="32bit..."
 	elif [ -n "$(uname -m | grep armv5)" ]; then
 		cpubits="arm5"
-		cpubitsname="(ARM 5)..."
+		cpubitsname="ARM 5..."
 	elif [ -n "$(uname -m | grep armv6l)" ]; then
 		cpubits="arm6"
-		cpubitsname="(ARM 6)..."
+		cpubitsname="ARM 6..."
 	elif [ -n "$(uname -m | grep armv7l)" ]; then
 		cpubits="arm7"
-		cpubitsname="(ARM 7)..."
+		cpubitsname="ARM 7..."
 	else
 		echo; echo "  unsupported or unknown architecture";
 		echo; exit;
@@ -227,8 +227,8 @@ getcaddy () {
 	isupdate="$1"
 	nocert="--no-check-certificate"
 	if [[ $isupdate == "update" ]]; then
-		caddyserv=$($caddypath/caddy -version | awk '{print}')
-		echo ""; echo "  Found $caddyserv";
+		caddyversion=$($caddypath/caddy -version | awk '{print}')
+		echo ""; echo "  Found $caddyversion";
 	fi
 
 	# Check if plugin should be installed
@@ -330,9 +330,9 @@ updatecaddy () {
 	echo;
 
 	# Check if there is newer version available
-	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ ! $CADDYV -gt $caddyserv ]]; then
+	if [[ ! $CADDYV -gt $caddyversion ]]; then
 		echo "  Looks like you already have latest version installed."
 		sleep 0.1
 		echo "  Abort.";
@@ -379,8 +379,8 @@ updatecaddy () {
 	# Removing caddy archive and printing info
 	echo $(date +%s) > $caddypath/update.check
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
-	caddyserv=$($caddypath/caddy -version | awk '{print}')
-	echo; echo "  Updated to $caddyserv"; echo;
+	caddyversion=$($caddypath/caddy -version | awk '{print}')
+	echo; echo "  Updated to $caddyversion"; echo;
 }
 
 
@@ -654,9 +654,17 @@ deletecaddy () {
 			# Usually on /opt/caddyserver and /etc/Caddyfile
 			rm -rf $caddypath &>/dev/null
 			rm -f $caddyfile &>/dev/null
-			echo "  $caddyname has been deleted."
+			if [[ -d  "$caddypath" ]]; then
+				echo "  $caddyname has been deleted."
+				deletecaddydata;
+			else
+				# remove caddy user
+				if id -u $caddyuser >/dev/null 2>&1; then
+					userdel $caddyuser # delete caddy user
+					echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+				fi
+			fi
 			echo ""
-			deletecaddydata;
 			exit
 			;;
 		[nN][oO]|[nN])
@@ -696,13 +704,13 @@ deletecaddydata () {
 versioninfo () {
 	echo ""
 	if [[ -e $caddypath/caddy ]]; then
-		caddyserverversion=$($caddypath/caddy -version | awk '{print $2}')
-		echo "  $caddyname $caddyserverversion"
+		caddyversion=$($caddypath/caddy -version | awk '{print $2}')
+		echo "  $caddyname $caddyversion"
 	else
 		echo "  $caddyname is not installed."
 	fi
 	echo "  Caddy Web Server Installer - $cwsiv"
-	if [[ -e /usr/bin/php ]]; then
+	if hash php 2>/dev/null; then
 		echo "  $(php -v | grep cli)"
 	fi
 	echo ""
@@ -721,9 +729,9 @@ editcaddyfile (){
 checkforupdate () {
 	# Check if there is newer version available
 	# Currenly only check caddyserver not this script
-	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ $CADDYV -gt $caddyserv ]]; then
+	if [[ $CADDYV -gt $caddyversion ]]; then
 		echo ""
 		echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
 		echo "  There is an update available of $caddyname"
