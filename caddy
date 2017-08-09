@@ -67,7 +67,7 @@ startcaddy () {
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# If service exist use service
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy start
 			else
 				systemctl start caddy
@@ -103,7 +103,7 @@ stopcaddy () {
 		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# Most arch based linux don't have service
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy stop
 			else
 				systemctl stop caddy
@@ -126,7 +126,7 @@ reloadcaddy () {
 		echo ""
 		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy reload
 			else
 				systemctl reload caddy
@@ -146,15 +146,15 @@ reloadcaddy () {
 restartphpfpm () {
 	phpvalue;
 	# Ubuntu
-	if [[ -e "$ubuntuphp5fpm" ]] ; then
+	if [[ -e "$ubuntuphp5fpm" ]]; then
 	service php5-fpm restart &>/dev/null
 
 	# CentOS
-	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
+	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]]; then
 	service php-fpm restart &>/dev/null
 	
 	# PHP 7
-	elif [[ -e "$phpfpm7" ]] ; then
+	elif [[ -e "$phpfpm7" ]]; then
 	/etc/init.d/php7.0-fpm reload &>/dev/null
 	fi
 }
