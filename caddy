@@ -16,7 +16,7 @@ bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
 # working directory
-cd /opt
+cd /opt || echo "Oops! /opt doesn't exist."
 
 about () {
 	echo ""
@@ -54,7 +54,14 @@ prms () {
 }
 
 startcaddy () {
-	# Check if process id folder does not exists
+	# exit if caddy is not installed
+	if [[ ! -e $caddypath/caddy ]]; then
+		echo; echo "  Caddy is not installed.";
+		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname"
+		echo; exit;
+	fi
+
+	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
 		mkdir -p $caddypid
@@ -582,7 +589,7 @@ if [[ -e /etc/systemd/system/caddy.service || -e /etc/init.d/caddy.sh ]]; then
 else
 	nocert="--no-check-certificate"
 	init=$(cat /proc/1/comm)
-	echo -n "  Creating service..."
+	echo -n "  Creating startup service..."
 	if [ "$init" == 'systemd' ]; then
 		MAIN="$"
 		MAINPID="MAINPID"
@@ -637,9 +644,13 @@ deletecaddy () {
 		read -p "  Select an option: " option
 		case $option in
 		[yY][eE][sS]|[yY])
-			stopcaddy;
-			sleep 0.5
-			sleep 3
+			# Stop caddy if running
+			if [ ! -z "$pids" ] ; then
+				echo "  Found Caddy is running!"
+				stopcaddy;
+				sleep 2
+			fi
+			sleep 1
 			# Disable and remove startup script if exist
 			init=$(cat /proc/1/comm)
 			if [ "$init" == 'systemd' ]; then
@@ -681,24 +692,28 @@ deletecaddy () {
 }
 
 deletecaddydata () {
-		read -r -p "  Would you also like to delete $caddywww (data)? [y/N]: " option
-		echo ""
-		case $option in
-		[yY][eE][sS]|[yY])
-			echo -n "  Deleting $caddywww (data)..."
-			sleep 2
-			rm -rf $caddywww # deleting caddy html folder
-			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-			# remove caddy user too if exists
-			if id -u $caddyuser >/dev/null 2>&1; then
-				userdel $caddyuser # delete caddy user
-				echo "  Caddy user '$caddyuser' has been deleted too."
-			fi
-			;;
-		*)
-          echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
-          ;;
-		esac
+	totalsize=$(du -sh $caddywww)
+	totalfiles=$(find $caddywww -type f | wc -l)
+	echo "  Would you also like to delete data?"
+	echo "  $totalsize (Files: $totalfiles)"
+	read -r -p "  Select an option [y/N]: " option
+	echo ""
+	case $option in
+	[yY][eE][sS]|[yY])
+		echo -n "  Deleting $caddywww (data)..."
+		sleep 2
+		rm -rf $caddywww # deleting caddy html folder
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		# remove caddy user too if exists
+		if id -u $caddyuser >/dev/null 2>&1; then
+			userdel $caddyuser # delete caddy user
+			echo "  Caddy user '$caddyuser' has been deleted too."
+		fi
+		;;
+	*)
+	echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
+	;;
+	esac
 }
 
 versioninfo () {
