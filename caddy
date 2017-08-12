@@ -295,7 +295,7 @@ installcaddy () {
 
 	# Creating non-root user
 	if id -u $caddyuser >/dev/null 2>&1; then
-		echo "  User '$caddyuser' already exists! Skipped."
+		echo "  User '$caddyuser' already exists. Skipped!"
 	else
 		echo -n "  Creating user '$caddyuser'..."
 		useradd -r -d $caddypath -s /bin/false $caddyuser &> /dev/null
@@ -307,14 +307,12 @@ installcaddy () {
 	# Port setup
 	echo -n "  Binding port using setcap..."
 	if hash setcap 2>/dev/null; then
-		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null && echo "  [$(tput setaf 2)DONE$(tput sgr0)]" || echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 	elif hash apt-get 2>/dev/null; then
 		apt-get install libcap2-bin -y &>/dev/null
-		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null && echo "  [$(tput setaf 2)DONE$(tput sgr0)]" || echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 	else
-		echo "  echo "  [$(tput setaf 1)FAILED$(tput sgr0)]""
+		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 	fi
 
 	# Show succes message on naked install
@@ -432,7 +430,7 @@ installphp () {
  			fi
 		;;
 		*)
-          echo "  PHP installation skipped."
+          echo "  PHP installation skipped!"
           ;;
 		esac
 		else
@@ -521,11 +519,11 @@ caddyfile () {
 			echo "  Enter your email for automated ssl"
 			read -p "  Email: " domainmail
 			until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
-			echo ""
-			echo "  Invalid email"
-			echo "  Type $(tput setaf 3)off$(tput sgr0) if you don't want https"
-			read -p "  Email: " domainmail
-		done
+				echo ""
+				echo "  Invalid email"
+				echo "  Type $(tput setaf 3)off$(tput sgr0) if you don't want https"
+				read -p "  Email: " domainmail
+			done
 		fi
 
 		echo "$domainname {
@@ -540,8 +538,8 @@ caddyfile () {
 
 		echo ""
 		echo "  $caddyfile created"
-		else
-		echo "  $caddyfile found. Skip... "
+	else
+		echo "  $caddyfile found. Skipped! "
 	fi
 
 	# Check if caddywww exist
@@ -562,14 +560,16 @@ You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
 <h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
-		echo "  index.html created"
+		echo "  index file created"
+		echo "  $caddywww/index.html"
 	else
-		echo "  index.html found. Skip ... "
+		echo "  index.html found. Skipped!"
 	fi
 
 	# phpinfo
 	if [[ ! -e $caddywww/info.php ]]; then
 		echo "<?php phpinfo(); ?>" >> $caddywww/info.php
+		echo ""
 		echo "  PHP-info file created"
 		echo "  $caddywww/info.php"
 	fi
@@ -585,7 +585,7 @@ You should <font color="#D03C3C">replace this file</font>
 
 makeservice () {
 if [[ -e /etc/systemd/system/caddy.service || -e /etc/init.d/caddy.sh ]]; then
-	echo "  Service already exists! Skipped."
+	echo "  Service already exists. Skipped!"
 else
 	nocert="--no-check-certificate"
 	init=$(cat /proc/1/comm)
@@ -664,6 +664,8 @@ deletecaddy () {
 			# Remove Caddy web server folder and Caddyfile
 			# Usually on /opt/caddyserver and /etc/Caddyfile
 			rm -rf $caddypath &>/dev/null
+			cp $caddyfile $caddyfile.bak
+			echo "  Backup of current Caddyfile saved to $caddyfile.bak"
 			rm -f $caddyfile &>/dev/null
 			if [[ -d  "$caddypath" ]]; then
 				echo "  $caddyname has been deleted."
@@ -712,6 +714,7 @@ deletecaddydata () {
 		;;
 	*)
 	echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
+	echo ""
 	;;
 	esac
 }
