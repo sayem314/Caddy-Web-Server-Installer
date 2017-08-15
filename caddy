@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.7 (07 Aug 2017)"
+cwsiv="v5.8 (15 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -53,13 +53,18 @@ prms () {
 	echo ""
 }
 
+isinstalled () {
+	# check if caddy is installed or return error code 1
+	if [[ ! -x $caddypath/caddy ]]; then
+		echo; echo "  Caddy is not installed.";
+		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname";
+		echo; return 1
+	fi
+}
+
 startcaddy () {
 	# exit if caddy is not installed
-	if [[ ! -e $caddypath/caddy ]]; then
-		echo; echo "  Caddy is not installed.";
-		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname"
-		echo; exit;
-	fi
+	isinstalled || exit 1
 
 	# create process id folder if necessary
 	caddypid="/var/run/caddy"
@@ -168,11 +173,7 @@ restartphpfpm () {
 
 caddystatus () {
 	# Check if Caddy is installed or not
-	if [[ ! -e $caddypath/caddy ]]; then
-		echo; echo "  Caddy is not installed.";
-		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname"
-		echo; exit;
-	fi
+	isinstalled || exit 1
 
 	# Detect Caddy process
 	if [ -z "$pids" ] ; then
@@ -270,7 +271,6 @@ installcaddy () {
 	getcaddy;
 
 	# Creating folders
-	echo ""
 	mkdir -p $caddypath
 	mkdir -p $caddylog
 	
@@ -325,12 +325,7 @@ installcaddy () {
 
 updatecaddy () {
 	# Detetcting Caddy installed or not
-	if [[ ! -e "$caddypath/caddy" ]]; then
-		echo; echo "  $caddyname is not installed";
-		sleep 0.2
-		echo "  run $(tput setaf 3)caddy install$(tput sgr0) to install $caddyname"
-		echo; exit;
-	fi
+	isinstalled || exit 1
 
 	echo;
 
@@ -433,7 +428,7 @@ installphp () {
           echo "  PHP installation skipped!"
           ;;
 		esac
-		else
+	else
 		echo "  Looks like Caddy was not installed!"
 	fi
 }
@@ -447,31 +442,35 @@ phpvalue () {
 
 fixphpfpm () {
 	phpvalue;
+	phpuser=$1
+	if [[ $phpuser == "" ]]; then
+		phpuser=$caddyuser
+	fi
 	# Detect php5-fpm or php-fpm
 	echo -n "  Fixing php sock issue..."
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
-		sed -i 's/group = .*/group = caddy/g' $ubuntuphp5fpm
+		sed -i "s@user = .*@user = $phpuser@g" $ubuntuphp5fpm
+		sed -i "s@group = .*@group = $phpuser@g" $ubuntuphp5fpm
 		sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $ubuntuphp5fpm
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $centosphpfpm
-		sed -i 's/group = .*/group = caddy/g' $centosphpfpm
+		sed -i "s@user = .*@user = $phpuser@g" $centosphpfpm
+		sed -i "s@group = .*@group = $phpuser@g" $centosphpfpm
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $centosphpfpm2
-		sed -i 's/group = .*/group = caddy/g' $centosphpfpm2
+		sed -i "s@user = .*@user = $phpuser@g" $centosphpfpm2
+		sed -i "s@group = .*@group = $phpuser@g" $centosphpfpm2
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $phpfpm7
-		sed -i 's/group = .*/group = caddy/g' $phpfpm7
+		sed -i "s@user = .*@user = $phpuser@g" $phpfpm7
+		sed -i "s@group = .*@group = $phpuser@g" $phpfpm7
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	
 	else
@@ -651,6 +650,7 @@ deletecaddy () {
 				sleep 2
 			fi
 			sleep 1
+
 			# Disable and remove startup script if exist
 			init=$(cat /proc/1/comm)
 			if [ "$init" == 'systemd' ]; then
@@ -661,18 +661,27 @@ deletecaddy () {
 				rm -f /etc/init/caddy.conf &>/dev/null
 			fi
 
-			# Remove Caddy web server folder and Caddyfile
-			# Usually on /opt/caddyserver and /etc/Caddyfile
+			# Remove Caddy web server folder, usually on /opt/caddyserver.
 			rm -rf $caddypath &>/dev/null
-			cp $caddyfile $caddyfile.bak
-			echo "  Backup of current Caddyfile saved to $caddyfile.bak"
+
+			# Backup Caddyfile if exists, usually on /etc/Caddyfile.
+			if [[ -e $caddyfile ]]; then
+				cp $caddyfile $caddyfile.bak
+				echo "  Backup of current Caddyfile saved to $caddyfile.bak"
+			fi
+
+			# Now remove Caddyfile
 			rm -f $caddyfile &>/dev/null
-			if [[ -d  "$caddypath" ]]; then
+
+			# Prompt if data should be removed
+			if [[ -d  "$caddywww" ]]; then
 				echo "  $caddyname has been deleted."
 				deletecaddydata;
 			else
 				# remove caddy user
 				if id -u $caddyuser >/dev/null 2>&1; then
+					fixphpfpm www-data;
+					restartphpfpm;
 					userdel $caddyuser # delete caddy user
 					echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
 				fi
@@ -686,9 +695,9 @@ deletecaddy () {
 			;;
 		*) echo ""; echo "  Incorrect input, exiting! "; exit;;
 		esac
-		else
-			echo ""
-			echo "  Looks like Caddy is not installed!"
+	else
+		echo ""
+		echo "  Looks like Caddy is not installed!"
 	fi
 	echo ""
 }
@@ -696,8 +705,9 @@ deletecaddy () {
 deletecaddydata () {
 	totalsize=$(du -sh $caddywww)
 	totalfiles=$(find $caddywww -type f | wc -l)
+	echo ""
 	echo "  Would you also like to delete data?"
-	echo "  $totalsize (Files: $totalfiles)"
+	echo "  Size: $totalsize (Files: $totalfiles)"
 	read -r -p "  Select an option [y/N]: " option
 	echo ""
 	case $option in
@@ -708,14 +718,15 @@ deletecaddydata () {
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		# remove caddy user too if exists
 		if id -u $caddyuser >/dev/null 2>&1; then
+			fixphpfpm www-data;
+			restartphpfpm;
 			userdel $caddyuser # delete caddy user
 			echo "  Caddy user '$caddyuser' has been deleted too."
 		fi
 		;;
 	*)
-	echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
-	echo ""
-	;;
+		echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
+		;;
 	esac
 }
 
