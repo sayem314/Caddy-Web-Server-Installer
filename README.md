@@ -1,7 +1,9 @@
-### This is a simple script to setup Caddy web server and maintain on Linux based OS
-See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation) for detailed instructions.
+This is a simple script to setup Caddy web server and maintain on Linux based OS
 
-Also check [wiki](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki) for more guide.
+### Quick Installation
+`wget https://git.io/vra5C -O - -o /dev/null|bash`
+
+See [Installation](https://github.com/sayem314/Caddy-Web-Server-Installer/wiki/Installation) for detailed instructions.
 
 #### Tested Operating System
 Ubuntu - 14.04 (Trusty Tahr), 14.10 (Utopic Unicorn), 15.04 (Vivid Vervet), 16.04.1 (Xenial Xerus)
@@ -26,5 +28,3 @@ BTC: <code>16YZHpUFVJSwAV9ZszHQa1XBnH8v53pCaU</code>
 LTC: <code>LfnBbkW1jsMzgG4Yo99EA4hTnt7pH69aG6</code>
 
 ETH: <code>0x38131a9Fc15fbE84FabEc3FA4BDf04cc4e939e2c</code>
-
-> * This script/program does not come with any kind of warranty. You're very welcome to inspect it's content.

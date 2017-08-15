@@ -11,12 +11,12 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.7 (07 Aug 2017)"
+cwsiv="v5.8 (15 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
 # working directory
-cd /opt
+cd /opt || echo "Oops! /opt doesn't exist."
 
 about () {
 	echo ""
@@ -43,6 +43,7 @@ prms () {
 	echo "  $bashname restart        - Restart $caddyname."
 	echo "  $bashname status         - Check $caddyname is running or not"; echo "                         or just run '$bashname'."
 	echo "  $bashname install        - Install $caddyname on fresh OS."
+	echo "  $bashname install-naked  - Install only $caddyname and no prompt."
 	echo "  $bashname edit           - Edit Caddyfile using nano or default editor." 
 	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."; echo "                         Not required because we install service on install."
 	echo "  $bashname update         - Update $caddyname."
@@ -52,8 +53,20 @@ prms () {
 	echo ""
 }
 
+isinstalled () {
+	# check if caddy is installed or return error code 1
+	if [[ ! -x $caddypath/caddy ]]; then
+		echo; echo "  Caddy is not installed.";
+		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname";
+		echo; return 1
+	fi
+}
+
 startcaddy () {
-	# Check if process id folder does not exists
+	# exit if caddy is not installed
+	isinstalled || exit 1
+
+	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
 		mkdir -p $caddypid
@@ -66,7 +79,7 @@ startcaddy () {
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# If service exist use service
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy start
 			else
 				systemctl start caddy
@@ -102,7 +115,7 @@ stopcaddy () {
 		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# Most arch based linux don't have service
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy stop
 			else
 				systemctl stop caddy
@@ -125,7 +138,7 @@ reloadcaddy () {
 		echo ""
 		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			if [[ -e /usr/sbin/service ]]; then
+			if hash service 2>/dev/null; then
 				service caddy reload
 			else
 				systemctl reload caddy
@@ -145,26 +158,22 @@ reloadcaddy () {
 restartphpfpm () {
 	phpvalue;
 	# Ubuntu
-	if [[ -e "$ubuntuphp5fpm" ]] ; then
+	if [[ -e "$ubuntuphp5fpm" ]]; then
 	service php5-fpm restart &>/dev/null
 
 	# CentOS
-	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]] ; then
+	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]]; then
 	service php-fpm restart &>/dev/null
 	
 	# PHP 7
-	elif [[ -e "$phpfpm7" ]] ; then
+	elif [[ -e "$phpfpm7" ]]; then
 	/etc/init.d/php7.0-fpm reload &>/dev/null
 	fi
 }
 
 caddystatus () {
 	# Check if Caddy is installed or not
-	if [[ ! -e $caddypath/caddy ]]; then
-		echo; echo "  Caddy is not installed.";
-		echo "  run $(tput setaf 3)$bashname install$(tput sgr0) to install $caddyname"
-		echo; exit;
-	fi
+	isinstalled || exit 1
 
 	# Detect Caddy process
 	if [ -z "$pids" ] ; then
@@ -204,19 +213,19 @@ getcaddy () {
 	# Detect architecture. We only support linux.
 	if [ -n "$(uname -m | grep 64)" ]; then
 		cpubits="amd64"
-		cpubitsname="(64bit)..."
+		cpubitsname="64bit..."
 	elif [ -n "$(uname -m | grep 86)" ]; then
 		cpubits="386"
-		cpubitsname="(32bit)..."
+		cpubitsname="32bit..."
 	elif [ -n "$(uname -m | grep armv5)" ]; then
 		cpubits="arm5"
-		cpubitsname="(ARM 5)..."
+		cpubitsname="ARM 5..."
 	elif [ -n "$(uname -m | grep armv6l)" ]; then
 		cpubits="arm6"
-		cpubitsname="(ARM 6)..."
+		cpubitsname="ARM 6..."
 	elif [ -n "$(uname -m | grep armv7l)" ]; then
 		cpubits="arm7"
-		cpubitsname="(ARM 7)..."
+		cpubitsname="ARM 7..."
 	else
 		echo; echo "  unsupported or unknown architecture";
 		echo; exit;
@@ -226,8 +235,8 @@ getcaddy () {
 	isupdate="$1"
 	nocert="--no-check-certificate"
 	if [[ $isupdate == "update" ]]; then
-		caddyserv=$($caddypath/caddy -version | awk '{print}')
-		echo ""; echo "  Found $caddyserv";
+		caddyversion=$($caddypath/caddy -version | awk '{print}')
+		echo ""; echo "  Found $caddyversion";
 	fi
 
 	# Check if plugin should be installed
@@ -262,7 +271,6 @@ installcaddy () {
 	getcaddy;
 
 	# Creating folders
-	echo ""
 	mkdir -p $caddypath
 	mkdir -p $caddylog
 	
@@ -279,15 +287,15 @@ installcaddy () {
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	echo ""
 
-	# Skip php installation on arch-linux
-	# Support for arch-linux will be implemented later
-	if [[ ! -e /usr/bin/pacman ]]; then
-		installphp;
+	# Skip php installation on arch-linux and naked install
+	# Php installation support for arch-linux will be implemented later
+	if [[ ! $1 == naked ]]; then
+		hash pacman 2>/dev/null || installphp
 	fi
 
 	# Creating non-root user
 	if id -u $caddyuser >/dev/null 2>&1; then
-		echo "  User '$caddyuser' already exists! Skipped."
+		echo "  User '$caddyuser' already exists. Skipped!"
 	else
 		echo -n "  Creating user '$caddyuser'..."
 		useradd -r -d $caddypath -s /bin/false $caddyuser &> /dev/null
@@ -297,31 +305,34 @@ installcaddy () {
 	chown -R $caddyuser $caddylog
 
 	# Port setup
-	APT_GET_CMD="/usr/bin/apt-get"
 	echo -n "  Binding port using setcap..."
-	if [[ ! -z $APT_GET_CMD ]]; then
+	if hash setcap 2>/dev/null; then
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null && echo "  [$(tput setaf 2)DONE$(tput sgr0)]" || echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
+	elif hash apt-get 2>/dev/null; then
 		apt-get install libcap2-bin -y &>/dev/null
+		setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null && echo "  [$(tput setaf 2)DONE$(tput sgr0)]" || echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
+	else
+		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 	fi
-	setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
-	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-	makeservice;
+
+	# Show succes message on naked install
+	if [[ $1 == naked ]]; then
+		echo ""
+		echo "  Installed $caddyname to $caddypath"
+		echo ""
+	fi
 }
 
 updatecaddy () {
 	# Detetcting Caddy installed or not
-	if [[ ! -e "$caddypath/caddy" ]]; then
-		echo; echo "  $caddyname is not installed";
-		sleep 0.2
-		echo "  run $(tput setaf 3)caddy install$(tput sgr0) to install $caddyname"
-		echo; exit;
-	fi
+	isinstalled || exit 1
 
 	echo;
 
 	# Check if there is newer version available
-	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ ! $CADDYV -gt $caddyserv ]]; then
+	if [[ ! $CADDYV -gt $caddyversion ]]; then
 		echo "  Looks like you already have latest version installed."
 		sleep 0.1
 		echo "  Abort.";
@@ -361,13 +372,15 @@ updatecaddy () {
 	if id -u $caddyuser >/dev/null 2>&1; then
 		chown -R $caddyuser $caddypath
     fi
-	setcap cap_net_bind_service=+ep $caddypath/caddy
+
+	# Port setup
+	hash setcap 2>/dev/null && setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 
 	# Removing caddy archive and printing info
 	echo $(date +%s) > $caddypath/update.check
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
-	caddyserv=$($caddypath/caddy -version | awk '{print}')
-	echo; echo "  Updated to $caddyserv"; echo;
+	caddyversion=$($caddypath/caddy -version | awk '{print}')
+	echo; echo "  Updated to $caddyversion"; echo;
 }
 
 
@@ -379,8 +392,7 @@ installphp () {
 			echo -n "  Installing required php files..."
 
 			# Detecting apt-get/yum
-  			APT_GET_CMD="/usr/bin/apt-get"
-			if [[ ! -z $APT_GET_CMD ]]; then
+			if hash apt-get 2>/dev/null; then
 				CODENAME=$(cat /etc/*-release | grep "VERSION_ID=" | cut -f1 -d'.'| cut -f2 -d'"')
 				DEBIAN9=$(lsb_release -i | awk 'NF{ print $NF }')
 				# If debian 9 or above select php7
@@ -398,25 +410,25 @@ installphp () {
 			fi
 
 			# Install PHP
-			YUM_CMD=$(which yum)
-			if [[ ! -z $YUM_CMD ]]; then
+			if hash yum 2>/dev/null; then
 				yum update -y &>/dev/null && yum install sed php-fpm php-cli php-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed 'php-fpm php-cli php-curl curl sudo'"
- 			elif [[ ! -z $APT_GET_CMD ]]; then
+				fixphpfpm;
+ 			elif hash apt-get 2>/dev/null; then
 				apt-get update -y &>/dev/null && apt-get install sed $PHP-fpm $PHP-cli $PHP-curl curl sudo -y &>/dev/null
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed '$PHP-fpm $PHP-cli $PHP-curl curl sudo'"
+				fixphpfpm;
    			else
 				echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  			fi
-			fixphpfpm;
 		;;
 		*)
-          echo "  PHP installation skipped."
+          echo "  PHP installation skipped!"
           ;;
 		esac
-		else
+	else
 		echo "  Looks like Caddy was not installed!"
 	fi
 }
@@ -430,31 +442,35 @@ phpvalue () {
 
 fixphpfpm () {
 	phpvalue;
+	phpuser=$1
+	if [[ $phpuser == "" ]]; then
+		phpuser=$caddyuser
+	fi
 	# Detect php5-fpm or php-fpm
 	echo -n "  Fixing php sock issue..."
 	#Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $ubuntuphp5fpm
-		sed -i 's/group = .*/group = caddy/g' $ubuntuphp5fpm
+		sed -i "s@user = .*@user = $phpuser@g" $ubuntuphp5fpm
+		sed -i "s@group = .*@group = $phpuser@g" $ubuntuphp5fpm
 		sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $ubuntuphp5fpm
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $centosphpfpm
-		sed -i 's/group = .*/group = caddy/g' $centosphpfpm
+		sed -i "s@user = .*@user = $phpuser@g" $centosphpfpm
+		sed -i "s@group = .*@group = $phpuser@g" $centosphpfpm
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $centosphpfpm2
-		sed -i 's/group = .*/group = caddy/g' $centosphpfpm2
+		sed -i "s@user = .*@user = $phpuser@g" $centosphpfpm2
+		sed -i "s@group = .*@group = $phpuser@g" $centosphpfpm2
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
-		sed -i 's/user = .*/user = caddy/g' $phpfpm7
-		sed -i 's/group = .*/group = caddy/g' $phpfpm7
+		sed -i "s@user = .*@user = $phpuser@g" $phpfpm7
+		sed -i "s@group = .*@group = $phpuser@g" $phpfpm7
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	
 	else
@@ -495,28 +511,34 @@ caddyfile () {
 		echo "  Seperated by comma"
 		read -p "  Domain name: " domainname
 		echo ""
-		echo "  Enter your email for automated ssl"
-		read -p "  Email: " domainmail
-		until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
-			echo ""
-			echo "  Invalid email"
+		# Check if gonna run locally
+		if [[ $domainname == "localhost" || $domainname == "localhost:*" || $domainname == "127.0.0*" || $domainname == "192.168*" ]]; then
+			echo "  SSL is disabled on non-production server."
+		else
+			echo "  Enter your email for automated ssl"
 			read -p "  Email: " domainmail
-		done
+			until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
+				echo ""
+				echo "  Invalid email"
+				echo "  Type $(tput setaf 3)off$(tput sgr0) if you don't want https"
+				read -p "  Email: " domainmail
+			done
+		fi
 
 		echo "$domainname {
-tls $domainmail
-root $caddywww
-gzip
-log $caddylog/access.log
-errors $caddylog/error.log
-fastcgi / $phpsock php
+	root $caddywww
+	gzip
+	tls $domainmail
+	log $caddylog/access.log
+	errors $caddylog/error.log
+	fastcgi / $phpsock php
 }
 " >> $caddyfile
 
 		echo ""
 		echo "  $caddyfile created"
-		else
-		echo "  $caddyfile found. Skip... "
+	else
+		echo "  $caddyfile found. Skipped! "
 	fi
 
 	# Check if caddywww exist
@@ -537,14 +559,16 @@ You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
 <h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
-		echo "  index.html created"
+		echo "  index file created"
+		echo "  $caddywww/index.html"
 	else
-		echo "  index.html found. Skip ... "
+		echo "  index.html found. Skipped!"
 	fi
 
 	# phpinfo
 	if [[ ! -e $caddywww/info.php ]]; then
 		echo "<?php phpinfo(); ?>" >> $caddywww/info.php
+		echo ""
 		echo "  PHP-info file created"
 		echo "  $caddywww/info.php"
 	fi
@@ -560,11 +584,11 @@ You should <font color="#D03C3C">replace this file</font>
 
 makeservice () {
 if [[ -e /etc/systemd/system/caddy.service || -e /etc/init.d/caddy.sh ]]; then
-	echo "  Service already exists! Skipped."
+	echo "  Service already exists. Skipped!"
 else
 	nocert="--no-check-certificate"
 	init=$(cat /proc/1/comm)
-	echo -n "  Creating service..."
+	echo -n "  Creating startup service..."
 	if [ "$init" == 'systemd' ]; then
 		MAIN="$"
 		MAINPID="MAINPID"
@@ -599,12 +623,10 @@ EOF
 		wget -q $nocert "https://raw.githubusercontent.com/sayem314/Caddy-Web-Server-Installer/master/php-fpm/runcaddy.sh" -O "/etc/init.d/caddy.sh"
 		chmod +x /etc/init.d/caddy.sh
 		# Enable
-		YUM_CMD=$(which yum)
-  		APT_GET_CMD="/usr/bin/apt-get"
-		if [[ ! -z $YUM_CMD ]]; then
+		if hash yum 2>/dev/null; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
- 		elif [[ ! -z $APT_GET_CMD ]]; then
+ 		elif hash apt-get 2>/dev/null; then
  			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
    		else
@@ -621,9 +643,14 @@ deletecaddy () {
 		read -p "  Select an option: " option
 		case $option in
 		[yY][eE][sS]|[yY])
-			stopcaddy;
-			sleep 0.5
-			sleep 3
+			# Stop caddy if running
+			if [ ! -z "$pids" ] ; then
+				echo "  Found Caddy is running!"
+				stopcaddy;
+				sleep 2
+			fi
+			sleep 1
+
 			# Disable and remove startup script if exist
 			init=$(cat /proc/1/comm)
 			if [ "$init" == 'systemd' ]; then
@@ -634,13 +661,32 @@ deletecaddy () {
 				rm -f /etc/init/caddy.conf &>/dev/null
 			fi
 
-			# Remove Caddy web server folder and Caddyfile
-			# Usually on /opt/caddyserver and /etc/Caddyfile
+			# Remove Caddy web server folder, usually on /opt/caddyserver.
 			rm -rf $caddypath &>/dev/null
+
+			# Backup Caddyfile if exists, usually on /etc/Caddyfile.
+			if [[ -e $caddyfile ]]; then
+				cp $caddyfile $caddyfile.bak
+				echo "  Backup of current Caddyfile saved to $caddyfile.bak"
+			fi
+
+			# Now remove Caddyfile
 			rm -f $caddyfile &>/dev/null
-			echo "  $caddyname has been deleted."
+
+			# Prompt if data should be removed
+			if [[ -d  "$caddywww" ]]; then
+				echo "  $caddyname has been deleted."
+				deletecaddydata;
+			else
+				# remove caddy user
+				if id -u $caddyuser >/dev/null 2>&1; then
+					fixphpfpm www-data;
+					restartphpfpm;
+					userdel $caddyuser # delete caddy user
+					echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+				fi
+			fi
 			echo ""
-			deletecaddydata;
 			exit
 			;;
 		[nN][oO]|[nN])
@@ -649,44 +695,51 @@ deletecaddy () {
 			;;
 		*) echo ""; echo "  Incorrect input, exiting! "; exit;;
 		esac
-		else
-			echo ""
-			echo "  Looks like Caddy is not installed!"
+	else
+		echo ""
+		echo "  Looks like Caddy is not installed!"
 	fi
 	echo ""
 }
 
 deletecaddydata () {
-		read -r -p "  Would you also like to delete $caddywww (data)? [y/N]: " option
-		echo ""
-		case $option in
-		[yY][eE][sS]|[yY])
-			echo -n "  Deleting $caddywww (data)..."
-			sleep 2
-			rm -rf $caddywww # deleting caddy html folder
-			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-			# remove caddy user too if exists
-			if id -u $caddyuser >/dev/null 2>&1; then
-				userdel $caddyuser # delete caddy user
-				echo "  Caddy user '$caddyuser' has been deleted too."
-			fi
-			;;
-		*)
-          echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
-          ;;
-		esac
+	totalsize=$(du -sh $caddywww)
+	totalfiles=$(find $caddywww -type f | wc -l)
+	echo ""
+	echo "  Would you also like to delete data?"
+	echo "  Size: $totalsize (Files: $totalfiles)"
+	read -r -p "  Select an option [y/N]: " option
+	echo ""
+	case $option in
+	[yY][eE][sS]|[yY])
+		echo -n "  Deleting $caddywww (data)..."
+		sleep 2
+		rm -rf $caddywww # deleting caddy html folder
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		# remove caddy user too if exists
+		if id -u $caddyuser >/dev/null 2>&1; then
+			fixphpfpm www-data;
+			restartphpfpm;
+			userdel $caddyuser # delete caddy user
+			echo "  Caddy user '$caddyuser' has been deleted too."
+		fi
+		;;
+	*)
+		echo "  Removing $caddywww (data)... [$(tput setaf 5)Skipped$(tput sgr0)]"
+		;;
+	esac
 }
 
 versioninfo () {
 	echo ""
 	if [[ -e $caddypath/caddy ]]; then
-		caddyserverversion=$($caddypath/caddy -version | awk '{print $2}')
-		echo "  $caddyname $caddyserverversion"
+		caddyversion=$($caddypath/caddy -version | awk '{print $2}')
+		echo "  $caddyname $caddyversion"
 	else
 		echo "  $caddyname is not installed."
 	fi
 	echo "  Caddy Web Server Installer - $cwsiv"
-	if [[ -e /usr/bin/php ]]; then
+	if hash php 2>/dev/null; then
 		echo "  $(php -v | grep cli)"
 	fi
 	echo ""
@@ -694,7 +747,7 @@ versioninfo () {
 
 # Edit Caddyfile using nano or default editor
 editcaddyfile (){
-	if [[ ! -z /usr/bin/nano ]]; then
+	if hash nano 2>/dev/null; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
    	else
@@ -705,9 +758,9 @@ editcaddyfile (){
 checkforupdate () {
 	# Check if there is newer version available
 	# Currenly only check caddyserver not this script
-	caddyserv=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
+	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
 	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ $CADDYV -gt $caddyserv ]]; then
+	if [[ $CADDYV -gt $caddyversion ]]; then
 		echo ""
 		echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
 		echo "  There is an update available of $caddyname"
@@ -731,7 +784,9 @@ case $1 in
 	'-status'|'--status'|'status'|'caddystatus' )
 		caddystatus;;
 	'-install'|'--install'|'install' )
-		amiroot; plugin="$2"; installcaddy; caddyfile;;
+		amiroot; plugin="$2"; installcaddy; makeservice; caddyfile;;
+	'-install-naked'|'--install-naked'|'install-naked' )
+		amiroot; plugin="$2"; installcaddy naked;;
 	'-update'|'--update'|'update'|'updatecaddy' )
 		amiroot; plugin="$2"; updatecaddy; caddyfile;;
 	'-fixphp'|'--fixphp'|'fixphp'|'fixphpfpm' )
