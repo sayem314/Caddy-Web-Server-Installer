@@ -601,14 +601,17 @@ After=network-online.target
 Requires=network-online.target
 
 [Service]
+Restart=on-abnormal
 User=$caddyuser
-StartLimitInterval=86400
-StartLimitBurst=5
-LimitNOFILE=16535
+LimitNOFILE=1048576
+LimitNPROC=64
 ExecStart=$caddypath/caddy -conf=$caddyfile -quiet=true -pidfile=/var/run/caddy/caddy.pid
 ExecReload=/bin/kill -USR1 $MAIN$MAINPID
 ExecStop=/bin/kill $MAIN$MAINPID
 PIDFile=/var/run/caddy/caddy.pid
+KillMode=mixed
+KillSignal=SIGQUIT
+TimeoutStopSec=5s
 
 [Install]
 WantedBy=multi-user.target
