@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.8 (15 Aug 2017)"
+cwsiv="v5.9 pre (NEXT)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -195,7 +195,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
-		echo "  System available RAM $(free -h | grep Mem: | awk '{print $4}')B"
+		echo "  System available RAM $(free -h | grep Mem: | awk '{print $7}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
 	fi
