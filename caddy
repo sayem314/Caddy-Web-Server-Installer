@@ -84,11 +84,7 @@ startcaddy () {
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# If service exist use service
-			if hash service 2>/dev/null; then
-				service caddy start
-			else
-				systemctl start caddy
-			fi
+			hash service 2>/dev/null && service caddy start || systemctl start caddy
 		else
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=$caddypid/caddy.pid &
 		fi
@@ -120,11 +116,7 @@ stopcaddy () {
 		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# Most arch based linux don't have service
-			if hash service 2>/dev/null; then
-				service caddy stop
-			else
-				systemctl stop caddy
-			fi
+			hash service 2>/dev/null && service caddy stop || systemctl stop caddy
 		else
 			kill $pids
 		fi
@@ -143,11 +135,8 @@ reloadcaddy () {
 		echo ""
 		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			if hash service 2>/dev/null; then
-				service caddy reload
-			else
-				systemctl reload caddy
-			fi
+			# Headless server should have service
+			hash service 2>/dev/null && service caddy reload || systemctl reload caddy
 		else
 			kill -USR1 $pids
 		fi
