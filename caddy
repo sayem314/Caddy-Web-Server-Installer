@@ -4,13 +4,18 @@
 # https://github.com/sayem314/Caddy-Web-Server-Installer
 #
 
+# Do not change any value after installation
+caddypath="/opt/caddyserver" # folder where caddyserver will be kept
+caddywww="/var/caddywww" # folder where public files should be
+caddyfile="/etc/Caddyfile" # caddy web server configuration file
+caddylog="/var/log/caddy" # folder where logs will be written
+caddyuser="caddy" # user under caddy is gonna be running
+
+# Load and replace above variable if Caddy.conf exists
+[[ -e /etc/Caddy.conf ]] && source /etc/Caddy.conf
+
 # Global config
 caddyname="Caddy Web Server"
-caddypath="/opt/caddyserver"
-caddyuser="caddy"
-caddyfile="/etc/Caddyfile"
-caddywww="/var/caddywww"
-caddylog="/var/log/caddy"
 cwsiv="v5.9 pre (NEXT)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
