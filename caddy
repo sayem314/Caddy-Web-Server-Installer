@@ -649,14 +649,7 @@ deletecaddy () {
 			sleep 1
 
 			# Disable and remove startup script if exist
-			init=$(cat /proc/1/comm)
-			if [ "$init" == 'systemd' ]; then
-				systemctl disable caddy &>/dev/null
-				rm -f /etc/systemd/system/caddy.service &>/dev/null
-			elif [ "$init" == 'init' ]; then
-				update-rc.d -f caddy.sh remove
-				rm -f /etc/init/caddy.conf &>/dev/null
-			fi
+			removeservice;
 
 			# Remove Caddy web server folder, usually on /opt/caddyserver.
 			rm -rf $caddypath &>/dev/null
@@ -697,6 +690,18 @@ deletecaddy () {
 		echo "  Looks like Caddy is not installed!"
 	fi
 	echo ""
+}
+
+removeservice () {
+	# Disable and remove startup script if exist
+	init=$(cat /proc/1/comm)
+	if [ "$init" == 'systemd' ]; then
+		systemctl disable caddy &>/dev/null
+		rm -f /etc/systemd/system/caddy.service &>/dev/null
+	elif [ "$init" == 'init' ]; then
+		update-rc.d -f caddy.sh remove
+		rm -f /etc/init/caddy.conf &>/dev/null
+	fi
 }
 
 deletecaddydata () {
@@ -747,8 +752,11 @@ editcaddyfile (){
 	if hash nano 2>/dev/null; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
-   	else
+   	elif hash editor 2>/dev/null; then
 		editor $caddyfile
+	else
+		echo "  error: please manually edit files"
+		echo "  $caddyfile"
  	fi
 }
 
@@ -796,6 +804,8 @@ case $1 in
 		amiroot; makeservice;;
 	'-del'|'delete'|'--delete'|'-rm'|'deletecaddy' )
 		amiroot; deletecaddy;;
+	'delete-service'|'--delete-service'|'remove-startup'|'--remove-startup' )
+		amiroot; removeservice;;
 	'-about'|'about'|'--about' )
 		about;;
 	'-h'|'help'|'-help'|'--help' )
