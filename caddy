@@ -694,13 +694,17 @@ deletecaddy () {
 
 removeservice () {
 	# Disable and remove startup script if exist
-	init=$(cat /proc/1/comm)
-	if [ "$init" == 'systemd' ]; then
-		systemctl disable caddy &>/dev/null
-		rm -f /etc/systemd/system/caddy.service &>/dev/null
-	elif [ "$init" == 'init' ]; then
-		update-rc.d -f caddy.sh remove
-		rm -f /etc/init/caddy.conf &>/dev/null
+	if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
+		init=$(cat /proc/1/comm)
+		echo -n "  Removing startup service..."
+		if [ "$init" == 'systemd' ]; then
+			systemctl disable caddy &>/dev/null
+			rm -f /etc/systemd/system/caddy.service &>/dev/null
+		elif [ "$init" == 'init' ]; then
+			update-rc.d -f caddy.sh remove
+			rm -f /etc/init/caddy.conf &>/dev/null
+		fi
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	fi
 }
 
