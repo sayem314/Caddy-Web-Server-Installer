@@ -722,12 +722,14 @@ deletecaddydata () {
 		sleep 2
 		rm -rf $caddywww # deleting caddy html folder
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-		# remove caddy user too if exists
-		if id -u $caddyuser >/dev/null 2>&1; then
-			fixphpfpm www-data;
-			restartphpfpm;
-			userdel $caddyuser # delete caddy user
-			echo "  Caddy user '$caddyuser' has been deleted too."
+		# remove caddyuser if exists
+		if [[ ! $caddyuser == $(whoami) ]]; then
+			if id -u $caddyuser >/dev/null 2>&1; then
+				fixphpfpm www-data;
+				restartphpfpm;
+				userdel $caddyuser # delete caddy user
+				echo "  Caddy user '$caddyuser' has been deleted too."
+			fi
 		fi
 		;;
 	*)
