@@ -74,7 +74,8 @@ startcaddy () {
 	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
-		mkdir -p $caddypid
+		mkdir -p $caddypid || { echo "  error creating folder $caddypid" 
+		echo "  try running with: sudo $bashname start" && exit }
 		chown $caddyuser $caddypid
 	fi
 
@@ -92,7 +93,8 @@ startcaddy () {
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 		sleep 1
-		restartphpfpm;
+		# restart or reload php for smooth environment
+		hash php 2>/dev/null && restartphpfpm;
 		pids=$(pgrep -nf $caddypath/caddy); caddystatus;
 	else
 		echo ""
@@ -671,7 +673,7 @@ deletecaddy () {
 				# remove caddy user
 				if [[ ! $caddyuser == $(whoami) ]]; then
 					if id -u $caddyuser >/dev/null 2>&1; then
-						fixphpfpm www-data;
+						hash php 2>/dev/null && fixphpfpm www-data;
 						restartphpfpm;
 						userdel $caddyuser # delete caddy user
 						echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
@@ -724,11 +726,11 @@ deletecaddydata () {
 		sleep 2
 		rm -rf $caddywww # deleting caddy html folder
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-		# remove caddyuser if exists
+		# remove caddy user too if exists
 		if [[ ! $caddyuser == $(whoami) ]]; then
 			if id -u $caddyuser >/dev/null 2>&1; then
-				fixphpfpm www-data;
-				restartphpfpm;
+				hash php 2>/dev/null && fixphpfpm www-data;
+				hash php 2>/dev/null && restartphpfpm;
 				userdel $caddyuser # delete caddy user
 				echo "  Caddy user '$caddyuser' has been deleted too."
 			fi
