@@ -74,8 +74,8 @@ startcaddy () {
 	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
-		mkdir -p $caddypid || { echo "  error creating folder $caddypid" 
-		echo "  try running with: sudo $bashname start" && exit }
+		mkdir -p $caddypid || ( echo "  error creating folder $caddypid" 
+		echo "  try running with: sudo $bashname start" && exit )
 		chown $caddyuser $caddypid
 	fi
 
