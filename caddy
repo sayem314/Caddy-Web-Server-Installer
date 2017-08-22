@@ -669,11 +669,13 @@ deletecaddy () {
 				deletecaddydata;
 			else
 				# remove caddy user
-				if id -u $caddyuser >/dev/null 2>&1; then
-					fixphpfpm www-data;
-					restartphpfpm;
-					userdel $caddyuser # delete caddy user
-					echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+				if [[ ! $caddyuser == $(whoami) ]]; then
+					if id -u $caddyuser >/dev/null 2>&1; then
+						fixphpfpm www-data;
+						restartphpfpm;
+						userdel $caddyuser # delete caddy user
+						echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+					fi
 				fi
 			fi
 			echo ""
