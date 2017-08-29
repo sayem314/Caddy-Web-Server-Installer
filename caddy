@@ -779,7 +779,7 @@ checkforupdate () {
 		echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
 		echo ""
 	else
-		echo $(date +%s) > $caddypath/update.check
+		[[ $CADDYV == "" ]] || echo $(date +%s) > $caddypath/update.check || sudo echo $(date +%s) > $caddypath/update.check
 	fi
 }
 
@@ -828,6 +828,7 @@ if [[ -e "$caddypath/caddy" ]]; then
 	# Create update.check file if not exist
 	if [[ ! -e $caddypath/update.check ]]; then
 		echo $(date +%s) > $caddypath/update.check
+		chmod 777 $caddypath/update.check
 	elif [[ -e $caddypath/update.check  ]]; then
 		currentdays="$(date +%s)"
 		lastcheckdays=$(cat $caddypath/update.check)
