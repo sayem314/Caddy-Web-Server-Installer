@@ -1,5 +1,8 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.9 (15 Aug 2017)
+- Support new Caddy url changes
+
 #### v5.8 (15 Aug 2017)
 - Added support for naked install
 - Improved Caddyfile and overall code
