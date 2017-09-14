@@ -11,7 +11,7 @@ caddyuser="caddy"
 caddyfile="/etc/Caddyfile"
 caddywww="/var/caddywww"
 caddylog="/var/log/caddy"
-cwsiv="v5.8 (15 Aug 2017)"
+cwsiv="v5.9 (15 Aug 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -241,9 +241,10 @@ getcaddy () {
 
 	# Check if plugin should be installed
 	if [[ ! $plugin == "" ]]; then
-		cpubits="$cpubits?plugins=$plugin"
+		cpubits="$cpubits?plugins=$plugin&license=personal"
 		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
 	else
+		cpubits="$cpubits?license=personal"
 		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	fi
 
