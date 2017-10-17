@@ -336,16 +336,16 @@ updatecaddy () {
 		exit;
 	fi
 
-	# Stop current process if found
-	if [ ! -z "$pids" ] ; then
-		echo "  Found Caddy is running!"
-		stopcaddy;
-	fi
-
 	# Download caddy
 	getcaddy update;
 	sleep 0.1
 
+	# Stop current process if found
+	if [ ! -z "$pids" ] ; then
+		echo ""
+		echo "  Found Caddy is running!"
+		stopcaddy;
+	fi
 	# Delete Caddy folder
 	echo -n "  Removing current $caddyname from $caddypath"
 	sleep 0.2
