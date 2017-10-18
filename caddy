@@ -367,7 +367,7 @@ updatecaddy () {
 	# Granting owner access and required permission
 	if id -u $caddyuser >/dev/null 2>&1; then
 		chown -R $caddyuser $caddypath
-    fi
+	fi
 
 	# Port setup
 	hash setcap 2>/dev/null && setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
@@ -381,7 +381,7 @@ updatecaddy () {
 
 
 installphp () {
-	if [[ -e  "$caddypath" ]] ; then
+	if [[ -e "$caddypath" ]] ; then
 		read -r -p "  Are you gonna run php site? [y/N]: " -e -i y option
 		case $option in
 		[yY][eE][sS]|[yY])
@@ -416,13 +416,13 @@ installphp () {
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed '$PHP-fpm $PHP-cli $PHP-curl curl sudo'"
 				fixphpfpm;
-   			else
+			else
 				echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  			fi
-		;;
+ 			;;
 		*)
-          echo "  PHP installation skipped!"
-          ;;
+			echo "  PHP installation skipped!"
+			;;
 		esac
 	else
 		echo "  Looks like Caddy was not installed!"
@@ -622,12 +622,12 @@ EOF
 		if hash yum 2>/dev/null; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
- 		elif hash apt-get 2>/dev/null; then
- 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		elif hash apt-get 2>/dev/null; then
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
-   		else
+		else
 			echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
- 		fi
+		fi
 	fi
 fi
 }
@@ -759,7 +759,7 @@ editcaddyfile (){
 	if hash nano 2>/dev/null; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
-   	elif hash editor 2>/dev/null; then
+	elif hash editor 2>/dev/null; then
 		editor $caddyfile
 	else
 		echo "  error: please manually edit files"
