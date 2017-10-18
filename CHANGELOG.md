@@ -1,5 +1,12 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v5.9 (not released)
+- Added custom configuration support
+- Improved package detection using hash
+- Fixed not showing real available RAM
+- Downtime is minimum on update
+- Other minor bugs fixed
+
 #### v5.8 (15 Aug 2017)
 - Added support for naked install
 - Improved Caddyfile and overall code
