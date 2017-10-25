@@ -1,6 +1,6 @@
 ### This repo contain changelog of script for better maintaining
 
-#### v5.9 (not released)
+#### v5.9 (25 Oct 2017)
 - Added custom configuration support
 - Improved package detection using hash
 - Fixed not showing real available RAM
