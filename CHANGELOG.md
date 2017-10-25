@@ -1,5 +1,12 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.0 (25 Oct 2017)
+- Added custom configuration support
+- Improved package detection using hash
+- Fixed not showing real available RAM
+- Downtime is minimum on update
+- Other minor bugs fixed
+
 #### v5.9 (15 Aug 2017)
 - Support new Caddy url changes
 

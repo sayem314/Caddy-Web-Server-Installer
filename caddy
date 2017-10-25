@@ -4,14 +4,19 @@
 # https://github.com/sayem314/Caddy-Web-Server-Installer
 #
 
+# Do not change any value after installation
+caddypath="/opt/caddyserver" # folder where caddyserver will be kept
+caddywww="/var/caddywww" # folder where public files should be
+caddyfile="/etc/Caddyfile" # caddy web server configuration file
+caddylog="/var/log/caddy" # folder where logs will be written
+caddyuser="caddy" # user under caddy is gonna be running
+
+# Load and replace above variable if Caddy.conf exists
+[[ -e /etc/Caddy.conf ]] && source /etc/Caddy.conf
+
 # Global config
 caddyname="Caddy Web Server"
-caddypath="/opt/caddyserver"
-caddyuser="caddy"
-caddyfile="/etc/Caddyfile"
-caddywww="/var/caddywww"
-caddylog="/var/log/caddy"
-cwsiv="v5.9 (15 Aug 2017)"
+cwsiv="v6.0 (25 Oct 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -69,7 +74,8 @@ startcaddy () {
 	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
-		mkdir -p $caddypid
+		mkdir -p $caddypid || ( echo "  error creating folder $caddypid" 
+		echo "  try running with: sudo $bashname start" && exit )
 		chown $caddyuser $caddypid
 	fi
 
@@ -79,11 +85,7 @@ startcaddy () {
 		echo -n "  Starting $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# If service exist use service
-			if hash service 2>/dev/null; then
-				service caddy start
-			else
-				systemctl start caddy
-			fi
+			hash service 2>/dev/null && service caddy start || systemctl start caddy
 		else
 			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=$caddypid/caddy.pid &
 		fi
@@ -91,7 +93,8 @@ startcaddy () {
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 
 		sleep 1
-		restartphpfpm;
+		# restart or reload php for smooth environment
+		hash php 2>/dev/null && restartphpfpm;
 		pids=$(pgrep -nf $caddypath/caddy); caddystatus;
 	else
 		echo ""
@@ -115,11 +118,7 @@ stopcaddy () {
 		fi
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			# Most arch based linux don't have service
-			if hash service 2>/dev/null; then
-				service caddy stop
-			else
-				systemctl stop caddy
-			fi
+			hash service 2>/dev/null && service caddy stop || systemctl stop caddy
 		else
 			kill $pids
 		fi
@@ -138,11 +137,8 @@ reloadcaddy () {
 		echo ""
 		echo -n "  Reloading $caddyname..."
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
-			if hash service 2>/dev/null; then
-				service caddy reload
-			else
-				systemctl reload caddy
-			fi
+			# Headless server should have service
+			hash service 2>/dev/null && service caddy reload || systemctl reload caddy
 		else
 			kill -USR1 $pids
 		fi
@@ -195,7 +191,7 @@ caddystatus () {
 		echo ""
 		echo "  $caddyname is $(tput setaf 2)running$(tput sgr0)"
 		echo "  Caddy (PID: $pids) is using $caddymemusage RAM"
-		echo "  System available RAM $(free -h | grep Mem: | awk '{print $4}')B"
+		echo "  System available RAM $(free -h | grep Mem: | awk '{print $7}')B"
 		echo "  Uptime - $caddyuptime"
 		echo ""
 	fi
@@ -341,16 +337,16 @@ updatecaddy () {
 		exit;
 	fi
 
-	# Stop current process if found
-	if [ ! -z "$pids" ] ; then
-		echo "  Found Caddy is running!"
-		stopcaddy;
-	fi
-
 	# Download caddy
 	getcaddy update;
 	sleep 0.1
 
+	# Stop current process if found
+	if [ ! -z "$pids" ] ; then
+		echo ""
+		echo "  Found Caddy is running!"
+		stopcaddy;
+	fi
 	# Delete Caddy folder
 	echo -n "  Removing current $caddyname from $caddypath"
 	sleep 0.2
@@ -372,7 +368,7 @@ updatecaddy () {
 	# Granting owner access and required permission
 	if id -u $caddyuser >/dev/null 2>&1; then
 		chown -R $caddyuser $caddypath
-    fi
+	fi
 
 	# Port setup
 	hash setcap 2>/dev/null && setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
@@ -386,7 +382,7 @@ updatecaddy () {
 
 
 installphp () {
-	if [[ -e  "$caddypath" ]] ; then
+	if [[ -e "$caddypath" ]] ; then
 		read -r -p "  Are you gonna run php site? [y/N]: " -e -i y option
 		case $option in
 		[yY][eE][sS]|[yY])
@@ -421,13 +417,13 @@ installphp () {
 				echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 				echo "  Installed '$PHP-fpm $PHP-cli $PHP-curl curl sudo'"
 				fixphpfpm;
-   			else
+			else
 				echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
  			fi
-		;;
+ 			;;
 		*)
-          echo "  PHP installation skipped!"
-          ;;
+			echo "  PHP installation skipped!"
+			;;
 		esac
 	else
 		echo "  Looks like Caddy was not installed!"
@@ -627,12 +623,12 @@ EOF
 		if hash yum 2>/dev/null; then
 			chkconfig caddy.sh on
 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
- 		elif hash apt-get 2>/dev/null; then
- 			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+		elif hash apt-get 2>/dev/null; then
+			echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 			update-rc.d caddy.sh defaults
-   		else
+		else
 			echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
- 		fi
+		fi
 	fi
 fi
 }
@@ -653,14 +649,7 @@ deletecaddy () {
 			sleep 1
 
 			# Disable and remove startup script if exist
-			init=$(cat /proc/1/comm)
-			if [ "$init" == 'systemd' ]; then
-				systemctl disable caddy &>/dev/null
-				rm -f /etc/systemd/system/caddy.service &>/dev/null
-			elif [ "$init" == 'init' ]; then
-				update-rc.d -f caddy.sh remove
-				rm -f /etc/init/caddy.conf &>/dev/null
-			fi
+			removeservice;
 
 			# Remove Caddy web server folder, usually on /opt/caddyserver.
 			rm -rf $caddypath &>/dev/null
@@ -680,11 +669,13 @@ deletecaddy () {
 				deletecaddydata;
 			else
 				# remove caddy user
-				if id -u $caddyuser >/dev/null 2>&1; then
-					fixphpfpm www-data;
-					restartphpfpm;
-					userdel $caddyuser # delete caddy user
-					echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+				if [[ ! $caddyuser == $(whoami) ]]; then
+					if id -u $caddyuser >/dev/null 2>&1; then
+						hash php 2>/dev/null && fixphpfpm www-data;
+						restartphpfpm;
+						userdel $caddyuser # delete caddy user
+						echo "  $caddyname and Caddy user '$caddyuser' has been deleted."
+					fi
 				fi
 			fi
 			echo ""
@@ -703,6 +694,22 @@ deletecaddy () {
 	echo ""
 }
 
+removeservice () {
+	# Disable and remove startup script if exist
+	if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
+		init=$(cat /proc/1/comm)
+		echo -n "  Removing startup service..."
+		if [ "$init" == 'systemd' ]; then
+			systemctl disable caddy &>/dev/null
+			rm -f /etc/systemd/system/caddy.service &>/dev/null
+		elif [ "$init" == 'init' ]; then
+			update-rc.d -f caddy.sh remove
+			rm -f /etc/init/caddy.conf &>/dev/null
+		fi
+		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	fi
+}
+
 deletecaddydata () {
 	totalsize=$(du -sh $caddywww)
 	totalfiles=$(find $caddywww -type f | wc -l)
@@ -718,11 +725,13 @@ deletecaddydata () {
 		rm -rf $caddywww # deleting caddy html folder
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 		# remove caddy user too if exists
-		if id -u $caddyuser >/dev/null 2>&1; then
-			fixphpfpm www-data;
-			restartphpfpm;
-			userdel $caddyuser # delete caddy user
-			echo "  Caddy user '$caddyuser' has been deleted too."
+		if [[ ! $caddyuser == $(whoami) ]]; then
+			if id -u $caddyuser >/dev/null 2>&1; then
+				hash php 2>/dev/null && fixphpfpm www-data;
+				hash php 2>/dev/null && restartphpfpm;
+				userdel $caddyuser # delete caddy user
+				echo "  Caddy user '$caddyuser' has been deleted too."
+			fi
 		fi
 		;;
 	*)
@@ -751,8 +760,11 @@ editcaddyfile (){
 	if hash nano 2>/dev/null; then
 		echo " opening $caddyfile using nano"
 		nano $caddyfile
-   	else
+	elif hash editor 2>/dev/null; then
 		editor $caddyfile
+	else
+		echo "  error: please manually edit files"
+		echo "  $caddyfile"
  	fi
 }
 
@@ -768,7 +780,7 @@ checkforupdate () {
 		echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
 		echo ""
 	else
-		echo $(date +%s) > $caddypath/update.check
+		[[ $CADDYV == "" ]] || echo $(date +%s) > $caddypath/update.check || sudo echo $(date +%s) > $caddypath/update.check
 	fi
 }
 
@@ -800,6 +812,8 @@ case $1 in
 		amiroot; makeservice;;
 	'-del'|'delete'|'--delete'|'-rm'|'deletecaddy' )
 		amiroot; deletecaddy;;
+	'delete-service'|'--delete-service'|'remove-startup'|'--remove-startup' )
+		amiroot; removeservice;;
 	'-about'|'about'|'--about' )
 		about;;
 	'-h'|'help'|'-help'|'--help' )
@@ -815,6 +829,7 @@ if [[ -e "$caddypath/caddy" ]]; then
 	# Create update.check file if not exist
 	if [[ ! -e $caddypath/update.check ]]; then
 		echo $(date +%s) > $caddypath/update.check
+		chmod 777 $caddypath/update.check
 	elif [[ -e $caddypath/update.check  ]]; then
 		currentdays="$(date +%s)"
 		lastcheckdays=$(cat $caddypath/update.check)
