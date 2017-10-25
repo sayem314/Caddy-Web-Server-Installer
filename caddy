@@ -237,9 +237,10 @@ getcaddy () {
 
 	# Check if plugin should be installed
 	if [[ ! $plugin == "" ]]; then
-		cpubits="$cpubits?plugins=$plugin"
+		cpubits="$cpubits?plugins=$plugin&license=personal"
 		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
 	else
+		cpubits="$cpubits?license=personal"
 		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	fi
 
