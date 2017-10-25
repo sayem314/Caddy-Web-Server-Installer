@@ -16,7 +16,7 @@ caddyuser="caddy" # user under caddy is gonna be running
 
 # Global config
 caddyname="Caddy Web Server"
-cwsiv="v5.9 pre (NEXT)"
+cwsiv="v5.9 (25 Oct 2017)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
