@@ -784,6 +784,18 @@ checkforupdate () {
 	fi
 }
 
+backupcaddy () {
+	backupname="caddybackup-$(date +"%Y%m%d%H%M").tar.gz"
+	echo "  Please wait! Creating backup $backupname"
+	echo "  $(du -sh $caddypath)"
+	echo "  $(du -sh $caddyfile)"
+	tar -czf $backupname $caddypath $caddyfile || ( echo "  error creating backup $backupname" 
+		echo "  Abort."
+		rm -f $backupname; exit )
+	echo "  Backup finished."
+	echo "  $(du -sh $backupname)"
+}
+
 # See how we were called.
 case $1 in
 	'-start'|'--start'|'start'|'startcaddy' )
@@ -814,6 +826,8 @@ case $1 in
 		amiroot; deletecaddy;;
 	'delete-service'|'--delete-service'|'remove-startup'|'--remove-startup' )
 		amiroot; removeservice;;
+	'-backup'|'--backup'|'backup' )
+		backupcaddy;;
 	'-about'|'about'|'--about' )
 		about;;
 	'-h'|'help'|'-help'|'--help' )
