@@ -16,7 +16,7 @@ caddyuser="caddy" # user under caddy is gonna be running
 
 # Global config
 caddyname="Caddy Web Server"
-cwsiv="v6.0 (25 Oct 2017)"
+cwsiv="v6.1 pre (NEXT)"
 bashname=$(basename $BASH_SOURCE)
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -789,11 +789,34 @@ backupcaddy () {
 	echo "  Please wait! Creating backup $backupname"
 	echo "  $(du -sh $caddypath)"
 	echo "  $(du -sh $caddyfile)"
-	tar -czf $backupname $caddypath $caddyfile || ( echo "  error creating backup $backupname" 
+	tar -czf $backupname $caddypath $caddyfile --absolute-names || ( echo "  error creating backup $backupname" 
 		echo "  Abort."
 		rm -f $backupname; exit )
 	echo "  Backup finished."
 	echo "  $(du -sh $backupname)"
+	exit
+}
+
+restorecaddy () {
+	if [[ ! -x $caddypath/caddy ]]; then
+		echo "  $(tput setaf 1)WARN:$(tput sgr0)"
+		echo "  Caddy is not installed."
+		echo "  It is recommended to install Caddy before restoring."
+		read -p "  Press enter to continue anyway!"
+	fi
+	echo -n "  Please provide backup name: "
+	read backupname
+	echo "  Please wait! restoring backup $backupname"
+	if [[ -e $backupname ]]; then
+		echo "  $(du -sh $backupname)"
+		tar -xzf $backupname --absolute-names || ( echo "  error restoring backup $backupname" 
+		echo "  Abort."; exit )
+		echo "  Restore finished."
+	else
+		echo "  $backupname not found on $(pwd)"
+		echo "  Abort."
+	fi
+	exit
 }
 
 # See how we were called.
@@ -828,6 +851,8 @@ case $1 in
 		amiroot; removeservice;;
 	'-backup'|'--backup'|'backup' )
 		backupcaddy;;
+	'-restore'|'--restore'|'restore' )
+		restorecaddy;;
 	'-about'|'about'|'--about' )
 		about;;
 	'-h'|'help'|'-help'|'--help' )
