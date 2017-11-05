@@ -4,6 +4,8 @@
 # https://github.com/sayem314/Caddy-Web-Server-Installer
 #
 
+# shellcheck disable=SC1091,SC1117,SC2015,SC2009,SC2004,SC2116,SC2046,SC2005,SC2034
+
 # Do not change any value after installation
 caddypath="/opt/caddyserver" # folder where caddyserver will be kept
 caddywww="/var/caddywww" # folder where public files should be
@@ -17,7 +19,7 @@ caddyuser="caddy" # user under caddy is gonna be running
 # Global config
 caddyname="Caddy Web Server"
 cwsiv="v6.1 pre (NEXT)"
-bashname=$(basename $BASH_SOURCE)
+bashname=$(basename "$0")
 pids=$(pgrep -nf $caddypath/caddy)
 
 # working directory
@@ -110,7 +112,7 @@ stopcaddy () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		secs=$(ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
+		secs=$(ps -p "$pids" -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
 		echo -n "  Shutting down $caddyname..."
 		# Wait if Caddy uptime is less than 5 seconds
 		if [[ $secs -lt 5 ]]; then
@@ -120,7 +122,7 @@ stopcaddy () {
 			# Most arch based linux don't have service
 			hash service 2>/dev/null && service caddy stop || systemctl stop caddy
 		else
-			kill $pids
+			kill "$pids"
 		fi
 		sleep 1
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -140,7 +142,7 @@ reloadcaddy () {
 			# Headless server should have service
 			hash service 2>/dev/null && service caddy reload || systemctl reload caddy
 		else
-			kill -USR1 $pids
+			kill -USR1 "$pids"
 		fi
 		sleep 2
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -177,8 +179,8 @@ caddystatus () {
 		echo "  $caddyname is $(tput setaf 1)NOT running$(tput sgr0)"
 		echo ""
 	else
-		caddymemusage=$(ps axo rss,comm,pid | grep $pids | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}')
-		secs=$(ps -p $pids -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
+		caddymemusage=$(ps axo rss,comm,pid | grep "$pids" | awk '{$1/=1024;printf "%.0fMB\t",$1}{print $2}' | awk '{print $1}')
+		secs=$(ps -p "$pids" -oetime= | tr '-' ':' | awk -F: '{ total=0; m=1; } { for (i=0; i < NF; i++) {total += $(NF-i)*m; m *= i >= 2 ? 24 : 60 }} {print total}')
 		if [[ $secs -lt 120 ]]; then
 			caddyuptime="$secs seconds"
 		elif [[ $secs -lt 3600 ]]; then
@@ -207,19 +209,19 @@ amiroot () {
 
 getcaddy () {
 	# Detect architecture. We only support linux.
-	if [ -n "$(uname -m | grep 64)" ]; then
+	if uname -m | grep -q 64; then
 		cpubits="amd64"
 		cpubitsname="64bit..."
-	elif [ -n "$(uname -m | grep 86)" ]; then
+	elif uname -m | grep -q 86; then
 		cpubits="386"
 		cpubitsname="32bit..."
-	elif [ -n "$(uname -m | grep armv5)" ]; then
+	elif uname -m | grep -q armv5; then
 		cpubits="arm5"
 		cpubitsname="ARM 5..."
-	elif [ -n "$(uname -m | grep armv6l)" ]; then
+	elif uname -m | grep -q armv6l; then
 		cpubits="arm6"
 		cpubitsname="ARM 6..."
-	elif [ -n "$(uname -m | grep armv7l)" ]; then
+	elif uname -m | grep -q armv7l; then
 		cpubits="arm7"
 		cpubitsname="ARM 7..."
 	else
@@ -350,7 +352,7 @@ updatecaddy () {
 	# Delete Caddy folder
 	echo -n "  Removing current $caddyname from $caddypath"
 	sleep 0.2
-	rm -rf $caddypath/*
+	rm -rf "${caddypath:?}/"*
 	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
 	sleep 0.1
 
@@ -481,20 +483,20 @@ caddyfile () {
 	phpvalue;
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
-	phpsock=$(cat $ubuntuphp5fpm | grep "listen = *" | cut -c 10-)
+	phpsock=$(grep "listen = *" < $ubuntuphp5fpm | cut -c 10-)
 	
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
-	phpsock=$(cat $centosphpfpm | grep "listen = *" | cut -c 10-)
+	phpsock=$(grep "listen = *" < $centosphpfpm | cut -c 10-)
 
 	# CentOS 2
 	elif [[ -e "$centosphpfpm2" ]] ; then
-	phpsock=$(cat $centosphpfpm2 | grep "listen = *" | cut -c 10-)
+	phpsock=$(grep "listen = *" < $centosphpfpm2 | cut -c 10-)
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]] ; then
 	sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $phpfpm7
-	phpsock=$(cat $phpfpm7 | grep "listen = *" | cut -c 10-)
+	phpsock=$(grep "listen = *" < $phpfpm7 | cut -c 10-)
 	
 	else
 	phpsock="127.0.0.1:9000"
@@ -506,19 +508,19 @@ caddyfile () {
 		echo ""
 		echo "  Enter your domain name"
 		echo "  Seperated by comma"
-		read -p "  Domain name: " domainname
+		read -r -p "  Domain name: " domainname
 		echo ""
 		# Check if gonna run locally
 		if [[ $domainname == "localhost" || $domainname == "localhost:*" || $domainname == "127.0.0*" || $domainname == "192.168*" ]]; then
 			echo "  SSL is disabled on non-production server."
 		else
 			echo "  Enter your email for automated ssl"
-			read -p "  Email: " domainmail
+			read -r -p "  Email: " domainmail
 			until [[ "$domainmail" == *@*.* || "$domainmail" == off ]]; do
 				echo ""
 				echo "  Invalid email"
 				echo "  Type $(tput setaf 3)off$(tput sgr0) if you don't want https"
-				read -p "  Email: " domainmail
+				read -r -p "  Email: " domainmail
 			done
 		fi
 
@@ -544,6 +546,7 @@ caddyfile () {
 	fi
 
 	# Generate example html
+	# shellcheck disable=SC1078,SC1079,SC2140
 	if [[ ! -e $caddywww/index.html ]]; then
 		echo "<TITLE>Caddy Default Page</TITLE>
 
@@ -637,7 +640,7 @@ deletecaddy () {
 	if [[ -e  "$caddypath" ]] ; then
 		echo ""
 		echo "  Are you sure you want to uninstall Caddy web server? [y/N]"
-		read -p "  Select an option: " option
+		read -r -p "  Select an option: " option
 		case $option in
 		[yY][eE][sS]|[yY])
 			# Stop caddy if running
@@ -780,7 +783,7 @@ checkforupdate () {
 		echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
 		echo ""
 	else
-		[[ $CADDYV == "" ]] || echo $(date +%s) > $caddypath/update.check || sudo echo $(date +%s) > $caddypath/update.check
+		[[ $CADDYV == "" ]] || echo $(date +%s) > $caddypath/update.check || echo $(date +%s) | sudo tee $caddypath/update.check
 	fi
 }
 
@@ -789,11 +792,11 @@ backupcaddy () {
 	echo "  Please wait! Creating backup $backupname"
 	echo "  $(du -sh $caddypath)"
 	echo "  $(du -sh $caddyfile)"
-	tar -czf $backupname $caddypath $caddyfile --absolute-names || ( echo "  error creating backup $backupname" 
+	tar -czf "$backupname" $caddypath $caddyfile --absolute-names || ( echo "  error creating backup $backupname" 
 		echo "  Abort."
-		rm -f $backupname; exit )
+		rm -f "$backupname"; exit )
 	echo "  Backup finished."
-	echo "  $(du -sh $backupname)"
+	echo "  $(du -sh "$backupname")"
 	exit
 }
 
@@ -802,14 +805,14 @@ restorecaddy () {
 		echo "  $(tput setaf 1)WARN:$(tput sgr0)"
 		echo "  Caddy is not installed."
 		echo "  It is recommended to install Caddy before restoring."
-		read -p "  Press enter to continue anyway!"
+		read -r -p "  Press enter to continue anyway!"
 	fi
 	echo -n "  Please provide backup name: "
-	read backupname
+	read -r -t 15 backupname || exit
 	echo "  Please wait! restoring backup $backupname"
 	if [[ -e $backupname ]]; then
-		echo "  $(du -sh $backupname)"
-		tar -xzf $backupname --absolute-names || ( echo "  error restoring backup $backupname" 
+		echo "  $(du -sh "$backupname")"
+		tar -xzf "$backupname" --absolute-names || ( echo "  error restoring backup $backupname" 
 		echo "  Abort."; exit )
 		echo "  Restore finished."
 	else
