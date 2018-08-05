@@ -53,7 +53,7 @@ startcaddy () {
 		if [[ -e /etc/init/caddy.conf || -e /etc/systemd/system/caddy.service ]]; then
 			service caddy start
 		else
-			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true &
+			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -agree &
 		fi
 		echo "  $(tput setaf 2)DONE$(tput sgr0)"
 		echo ""
@@ -322,7 +322,7 @@ PIDFile=/var/run/caddy/caddy.pid
 ExecStartPre=[ -f ${caddyfile} ]
 ExecStartPre=[ -e ${caddypath}/caddy ]
 ExecStartPre=service php5-fpm start
-ExecStart=${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid
+ExecStart=${caddypath}/caddy -conf="${caddyfile}" -quiet=true -pidfile=/var/run/caddy/caddy.pid -agree
 Restart=on-failure
 StartLimitInterval=600
 
