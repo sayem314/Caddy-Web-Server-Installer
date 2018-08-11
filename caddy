@@ -89,7 +89,7 @@ startcaddy () {
 			# If service exist use service
 			hash service 2>/dev/null && service caddy start || systemctl start caddy
 		else
-			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=$caddypid/caddy.pid &
+			sudo -H -u $caddyuser $caddypath/caddy -conf="$caddyfile" -quiet=true -pidfile=$caddypid/caddy.pid -agree &
 		fi
 		sleep 1
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
@@ -605,7 +605,7 @@ User=$caddyuser
 StartLimitInterval=86400
 StartLimitBurst=5
 LimitNOFILE=16535
-ExecStart=$caddypath/caddy -conf=$caddyfile -quiet=true -pidfile=/var/run/caddy/caddy.pid
+ExecStart=$caddypath/caddy -conf=$caddyfile -quiet=true -pidfile=/var/run/caddy/caddy.pid -agree
 ExecReload=/bin/kill -USR1 $MAIN$MAINPID
 ExecStop=/bin/kill $MAIN$MAINPID
 PIDFile=/var/run/caddy/caddy.pid
