@@ -1,5 +1,10 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.1 (20 Sep 2018)
+- Improved coding style
+- Fixed some stuff
+- Added backup and restore function (experimental)
+
 #### v6.0 (25 Oct 2017)
 - Added custom configuration support
 - Improved package detection using hash
