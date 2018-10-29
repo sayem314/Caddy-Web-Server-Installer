@@ -209,9 +209,12 @@ amiroot () {
 
 getcaddy () {
 	# Detect architecture. We only support linux.
-	if uname -m | grep -q 64; then
+	if uname -m | grep -q x86_64; then
 		cpubits="amd64"
 		cpubitsname="64bit..."
+	elif uname -m | grep -q aarch64; then
+		cpubits="arm64"
+		cpubitsname="AArch64..."
 	elif uname -m | grep -q 86; then
 		cpubits="386"
 		cpubitsname="32bit..."
