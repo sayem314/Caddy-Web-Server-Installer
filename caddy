@@ -18,7 +18,7 @@ caddyuser="caddy" # user under caddy is gonna be running
 
 # Global config
 caddyname="Caddy Web Server"
-cwsiv="v6.1 pre (NEXT)"
+cwsiv="v6.2"
 bashname=$(basename "$0")
 pids=$(pgrep -nf $caddypath/caddy)
 
@@ -51,7 +51,7 @@ prms () {
 	echo "  $bashname status         - Check $caddyname is running or not"; echo "                         or just run '$bashname'."
 	echo "  $bashname install        - Install $caddyname on fresh OS."
 	echo "  $bashname install-naked  - Install only $caddyname and no prompt."
-	echo "  $bashname edit           - Edit Caddyfile using nano or default editor." 
+	echo "  $bashname edit           - Edit Caddyfile using nano or default editor."
 	echo "  $bashname service        - Make $caddyname start on boot (upstart/systemd)."; echo "                         Not required because we install service on install."
 	echo "  $bashname update         - Update $caddyname."
 	echo "  $bashname delete         - Uninstall $caddyname and data."; echo "                         We would prompt you if you want to keep data."
@@ -76,8 +76,11 @@ startcaddy () {
 	# create process id folder if necessary
 	caddypid="/var/run/caddy"
 	if [[ ! -f $caddypid ]]; then
-		mkdir -p $caddypid || ( echo "  error creating folder $caddypid" 
-		echo "  try running with: sudo $bashname start" && exit )
+		mkdir -p $caddypid || (
+		  echo "  error creating folder $caddypid"
+		  echo "  try running with: sudo $bashname start"
+			exit 1
+		) || exit 1
 		chown $caddyuser $caddypid
 	fi
 
@@ -162,7 +165,7 @@ restartphpfpm () {
 	# CentOS
 	elif [[ -e "$centosphpfpm" || -e "$centosphpfpm2" ]]; then
 	service php-fpm restart &>/dev/null
-	
+
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]]; then
 	/etc/init.d/php7.0-fpm reload &>/dev/null
@@ -243,21 +246,21 @@ getcaddy () {
 	# Check if plugin should be installed
 	if [[ ! $plugin == "" ]]; then
 		cpubits="$cpubits?plugins=$plugin&license=personal&telemetry=off"
-		echo -n "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
+		echo "  Downloading $caddyname with plugin ($plugin) for $cpubitsname" # Caddy linux
 	else
 		cpubits="$cpubits?license=personal&telemetry=off"
-		echo -n "  Downloading $caddyname for $cpubitsname" # Caddy linux
+		echo "  Downloading $caddyname for $cpubitsname" # Caddy linux
 	fi
 
 	# Star downloading caddy now
-	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz"; then
+	if ! wget -q $nocert "https://caddyserver.com/download/linux/$cpubits" -O "caddy_linux_custom.tar.gz" --show-progress; then
 		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 		echo ""
 		echo "  Error: Cannot download Caddy binary!"
 		echo "  https://caddyserver.com/download/linux/$cpubits"
 		exit 1
 	fi
-	echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
+	echo ""
 }
 
 installcaddy () {
@@ -275,7 +278,7 @@ installcaddy () {
 	# Creating folders
 	mkdir -p $caddypath
 	mkdir -p $caddylog
-	
+
 	# Extract Caddy to appropriate folder
 	echo -n "  Extracting $caddyname to $caddypath..."
 	if ! tar xzf caddy_linux_custom.tar.gz -C $caddypath; then
@@ -474,7 +477,7 @@ fixphpfpm () {
 		sed -i "s@user = .*@user = $phpuser@g" $phpfpm7
 		sed -i "s@group = .*@group = $phpuser@g" $phpfpm7
 		echo "  [$(tput setaf 2)DONE$(tput sgr0)]"
-	
+
 	else
 		echo "  [$(tput setaf 1)FAILED$(tput sgr0)]"
 		echo "  php not found!"
@@ -487,7 +490,7 @@ caddyfile () {
 	# Ubuntu
 	if [[ -e "$ubuntuphp5fpm" ]] ; then
 	phpsock=$(grep "listen = *" < $ubuntuphp5fpm | cut -c 10-)
-	
+
 	# CentOS
 	elif [[ -e "$centosphpfpm" ]] ; then
 	phpsock=$(grep "listen = *" < $centosphpfpm | cut -c 10-)
@@ -500,7 +503,7 @@ caddyfile () {
 	elif [[ -e "$phpfpm7" ]] ; then
 	sed -i 's/listen = .*/listen = 127.0.0.1:9000/g' $phpfpm7
 	phpsock=$(grep "listen = *" < $phpfpm7 | cut -c 10-)
-	
+
 	else
 	phpsock="127.0.0.1:9000"
 	fi
@@ -795,7 +798,7 @@ backupcaddy () {
 	echo "  Please wait! Creating backup $backupname"
 	echo "  $(du -sh $caddypath)"
 	echo "  $(du -sh $caddyfile)"
-	tar -czf "$backupname" $caddypath $caddyfile --absolute-names || ( echo "  error creating backup $backupname" 
+	tar -czf "$backupname" $caddypath $caddyfile --absolute-names || ( echo "  error creating backup $backupname"
 		echo "  Abort."
 		rm -f "$backupname"; exit )
 	echo "  Backup finished."
@@ -815,7 +818,7 @@ restorecaddy () {
 	echo "  Please wait! restoring backup $backupname"
 	if [[ -e $backupname ]]; then
 		echo "  $(du -sh "$backupname")"
-		tar -xzf "$backupname" --absolute-names || ( echo "  error restoring backup $backupname" 
+		tar -xzf "$backupname" --absolute-names || ( echo "  error restoring backup $backupname"
 		echo "  Abort."; exit )
 		echo "  Restore finished."
 	else
