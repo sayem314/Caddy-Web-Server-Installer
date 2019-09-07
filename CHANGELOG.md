@@ -1,5 +1,9 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.3 (07 Sep 2019)
+- Fixed 1.x update issue
+- Other minor improvements
+
 #### v6.2 (10 May 2019)
 - Add support for AArch64
 - Fixed start issue and added download progress
@@ -69,7 +73,7 @@
 - Improved systemd service
 
 #### v4.8 (29 Jun 2017)
-- update issue fixed
+- Update issue fixed
 
 #### v4.7 (24 Apr 2017)
 - Debian php5 issue fixed
