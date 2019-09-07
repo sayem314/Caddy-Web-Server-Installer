@@ -752,12 +752,11 @@ deletecaddydata () {
 versioninfo () {
 	echo ""
 	if [[ -e $caddypath/caddy ]]; then
-		caddyversion=$($caddypath/caddy -version | awk '{print $2}')
-		echo "  $caddyname $caddyversion"
+		echo "  $($caddypath/caddy -version)"
 	else
 		echo "  $caddyname is not installed."
 	fi
-	echo "  Caddy Web Server Installer - $cwsiv"
+	echo "  $caddyname Installer - $cwsiv"
 	if hash php 2>/dev/null; then
 		echo "  $(php -v | grep cli)"
 	fi
