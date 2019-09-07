@@ -328,6 +328,33 @@ installcaddy () {
 	fi
 }
 
+compareVersion () {
+	IFS='.' read -ra ver1 <<< "$1"
+	IFS='.' read -ra ver2 <<< "$2"
+
+	[[ ${#ver1[@]} -gt ${#ver2[@]} ]] && till=${#ver1[@]} || till=${#ver2[@]}
+
+	for ((i=0; i<${till}; i++)); do
+
+	    local num1; local num2;
+
+	    [[ -z ${ver1[i]} ]] && num1=0 || num1=${ver1[i]}
+	    [[ -z ${ver2[i]} ]] && num2=0 || num2=${ver2[i]}
+
+	    if [[ $num1 -gt $num2 ]]; then
+	        echo ">"
+					return 0
+	    elif
+	       [[ $num1 -lt $num2 ]]; then
+	        echo "<"
+					return 0
+	    fi
+	done
+
+	echo "="
+	return 0
+}
+
 updatecaddy () {
 	# Detetcting Caddy installed or not
 	isinstalled || exit 1
@@ -335,9 +362,11 @@ updatecaddy () {
 	echo;
 
 	# Check if there is newer version available
-	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ ! $CADDYV -gt $caddyversion ]]; then
+	caddyversion=$($caddypath/caddy -version | sed -e 's/-/ /g' -e 's/[^0-9\. ]*//g' | awk '{print $1}')
+	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9\.]*//g')
+	isGreater=$(compareVersion $CADDYV $caddyversion)
+
+	if [[ $isGreater != ">" ]]; then
 		echo "  Looks like you already have latest version installed."
 		sleep 0.1
 		echo "  Abort.";
