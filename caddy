@@ -21,6 +21,7 @@ caddyname="Caddy Web Server"
 cwsiv="v6.3"
 bashname=$(basename "$0")
 pids=$(pgrep -nf $caddypath/caddy)
+updateCheck="$caddypath/update.check"
 
 # working directory
 cd /opt || echo "Oops! /opt doesn't exist."
@@ -411,7 +412,7 @@ updatecaddy () {
 	hash setcap 2>/dev/null && setcap cap_net_bind_service=+ep $caddypath/caddy &>/dev/null
 
 	# Removing caddy archive and printing info
-	echo $(date +%s) > $caddypath/update.check
+	echo $(date +%s) > $updateCheck
 	rm -f caddy_linux_custom.tar.gz # Deleting Caddy archive
 	caddyversion=$($caddypath/caddy -version | awk '{print}')
 	echo; echo "  Updated to $caddyversion"; echo;
@@ -902,20 +903,20 @@ case $1 in
 		caddystatus; howto;;
 esac
 
-# check updates every 72hrs
+# check updates every 48hrs
 if [[ -e "$caddypath/caddy" ]]; then
+	currentDays=$(date +%s)
 	# Create update.check file if not exist
-	if [[ ! -e $caddypath/update.check ]]; then
-		echo $(date +%s) > $caddypath/update.check
-		chmod 777 $caddypath/update.check
-	elif [[ -e $caddypath/update.check  ]]; then
-		currentdays="$(date +%s)"
-		lastcheckdays=$(cat $caddypath/update.check)
-		updatedays="$(($currentdays - $lastcheckdays))"
-		# if more than 72hrs execute update check
-		if [[ $updatedays -gt 259200 ]]; then
-			checkforupdate;
-		fi
+	if [[ ! -e $updateCheck ]]; then
+		echo $currentDays > $updateCheck
+		chmod 777 $updateCheck
+	fi
+	lastCheckDays=$(cat $updateCheck)
+	updateDays="$(($currentDays - $lastCheckDays))"
+
+	# if more than 48hrs execute update check
+	if [[ $updateDays -gt 172800 ]]; then
+		checkforupdate $currentDays $updateCheck;
 	fi
 fi
 
