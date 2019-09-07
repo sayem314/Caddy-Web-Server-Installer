@@ -809,17 +809,17 @@ editcaddyfile (){
 
 checkforupdate () {
 	# Check if there is newer version available
-	# Currenly only check caddyserver not this script
-	caddyversion=$($caddypath/caddy -version | awk '{print}' | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9]*//g' | sed 's/^0*//')
-	if [[ $CADDYV -gt $caddyversion ]]; then
+	# Currenly only checks for caddy web server and not this script
+	caddyversion=$($caddypath/caddy -version | sed -e 's/-/ /g' -e 's/[^0-9\. ]*//g' | awk '{print $1}')
+	CADDYV=$(wget -qO- https://api.github.com/repos/mholt/caddy/releases/latest | grep tag_name | sed 's/[^0-9\.]*//g')
+	isGreater=$(compareVersion $CADDYV $caddyversion)
+
+	if [[ $CADDYV != "" && $isGreater == ">" ]]; then
 		echo ""
 		echo "  $(tput setaf 1)NOTICE:$(tput sgr0)"
 		echo "  There is an update available of $caddyname"
 		echo "  run $(tput setaf 3)$bashname update$(tput sgr0) to update"
 		echo ""
-	else
-		[[ $CADDYV == "" ]] || echo $(date +%s) > $caddypath/update.check || echo $(date +%s) | sudo tee $caddypath/update.check
 	fi
 }
 
