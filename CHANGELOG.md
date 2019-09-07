@@ -1,5 +1,9 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.2 (10 May 2019)
+- Add support for AArch64
+- Fixed start issue and added download progress
+
 #### v6.1 (20 Sep 2018)
 - Improved coding style
 - Fixed some stuff
@@ -65,13 +69,13 @@
 - Improved systemd service
 
 #### v4.8 (29 Jun 2017)
-- update issue fixed 
+- update issue fixed
 
 #### v4.7 (24 Apr 2017)
 - Debian php5 issue fixed
 
 #### v4.6 (24 Apr 2017)
-- Support for new Caddy changes 
+- Support for new Caddy changes
 
 #### v4.5 (20 Mar 2017)
 - Fixed and improved service for systemd
@@ -163,7 +167,7 @@
 - Fixed yum update issue
 
 #### v2.7 beta (26 Apr 2016)
-- Minor issue fixed 
+- Minor issue fixed
 
 #### v2.6 beta (26 Apr 2016)
 - Fixed showing memory usage of Caddy
@@ -223,7 +227,7 @@
 - Added version info
 
 #### v1.3 beta (26 Mar 2016)
-- Fixed showing wrong RAM usage 
+- Fixed showing wrong RAM usage
 
 #### v1.2 beta (26 Mar 2016)
 - apt- get/yum bug fixed
