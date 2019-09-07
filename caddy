@@ -583,7 +583,8 @@ caddyfile () {
 	# Generate example html
 	# shellcheck disable=SC1078,SC1079,SC2140
 	if [[ ! -e $caddywww/index.html ]]; then
-		echo "<TITLE>Caddy Default Page</TITLE>
+		cat <<EOF > $caddywww/index.html
+<TITLE>Caddy Default Page</TITLE>
 
 <h1><font color="green">It works!</font></h1>
 
@@ -593,7 +594,8 @@ caddyfile () {
 You should <font color="#D03C3C">replace this file</font>
 (located at <tt>$caddywww/index.html</tt>) before continuing to operate your server.</font></h3>
 </hr>
-<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>" >> $caddywww/index.html
+<h3><font color="grey">If you are a normal user of this web site and don't know what this page is about, this probably means that the site is currently unavailable due to maintenance.</font></h3>
+EOF
 		echo "  index file created"
 		echo "  $caddywww/index.html"
 	else
