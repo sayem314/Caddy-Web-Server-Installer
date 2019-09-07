@@ -1,5 +1,9 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.4 (07 Sep 2019)
+- Fixed periodic update check issue
+- Improved update check
+
 #### v6.3 (07 Sep 2019)
 - Fixed 1.x update issue
 - Other minor improvements
