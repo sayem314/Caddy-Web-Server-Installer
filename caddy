@@ -885,7 +885,7 @@ case $1 in
 		amiroot; editcaddyfile;;
 	'-service'|'--service'|'service'|'makeservice' )
 		amiroot; makeservice;;
-	'-del'|'delete'|'--delete'|'-rm'|'deletecaddy' )
+	'-del'|'delete'|'--delete'|'-rm'|'deletecaddy'|'-uninstall'|'uninstall' )
 		amiroot; deletecaddy;;
 	'delete-service'|'--delete-service'|'remove-startup'|'--remove-startup' )
 		amiroot; removeservice;;
