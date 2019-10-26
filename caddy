@@ -169,7 +169,7 @@ restartphpfpm () {
 
 	# PHP 7
 	elif [[ -e "$phpfpm7" ]]; then
-	/etc/init.d/php7.0-fpm reload &>/dev/null
+	/etc/init.d/php7.*-fpm reload &>/dev/null
 	fi
 }
 
@@ -438,8 +438,10 @@ installphp () {
 			fi
 
 			# Setup PHP
-			if [[ $CODENAME -gt 15 ]] || [[ $DEBIAN9V -gt 8 ]]; then
+			if [[ $CODENAME -gt 15 ]] || [[ $DEBIAN9V -eq 9 ]]; then
 				PHP="php7.0"
+			elif [[ $DEBIAN9V -ge 10 ]]; then
+				PHP="php"
 			else
 				PHP="php5"
 			fi
@@ -472,7 +474,7 @@ phpvalue () {
 	ubuntuphp5fpm="/etc/php5/fpm/pool.d/www.conf"
 	centosphpfpm="/etc/php/fpm/pool.d/www.conf"
 	centosphpfpm2="/etc/php-fpm.d/www.conf"
-	phpfpm7="/etc/php/7.0/fpm/pool.d/www.conf"
+	phpfpm7=$(echo /etc/php/7.*/fpm/pool.d/www.conf)
 }
 
 fixphpfpm () {
