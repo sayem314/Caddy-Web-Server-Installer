@@ -1,5 +1,10 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.6 (20 Apr 2020)
+
+- Support older version of wget
+- Fix caddy update check
+
 #### v6.5 (26 Oct 2019)
 
 - Debian 10.x support
