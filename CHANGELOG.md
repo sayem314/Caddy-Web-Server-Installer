@@ -1,5 +1,9 @@
 ### This repo contain changelog of script for better maintaining
 
+#### v6.7 (07 Aug 2020)
+
+- Updated download link to v1.0.4 and plan to stick with this version for a while as v2 configuration seems hard and I don't have enough time right now to read the docs and convert them.
+
 #### v6.6 (20 Apr 2020)
 
 - Support older version of wget
